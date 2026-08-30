@@ -1,0 +1,40 @@
+{
+    "configurations": [
+        {
+            "name": "STM32G474 ARMCLANG",
+            "compilerPath": "F:/keil5/ARM/ARMCLANG/bin/armclang.exe",
+            "compileCommands": "${workspaceFolder}/build/Super_Capacitor(500W)/compile_commands.json",
+            "intelliSenseMode": "windows-clang-arm",
+            "cStandard": "c99",
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32G474xx",
+                "ARM_MATH_CM4",
+                "__FPU_PRESENT=1U"
+            ],
+            "includePath": [
+                "../Core/Inc",
+                "../Drivers/STM32G4xx_HAL_Driver/Inc",
+                "../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy",
+                "../Drivers/CMSIS/Device/ST/STM32G4xx/Include",
+                "../Drivers/CMSIS/Include",
+                "../Drivers/CMSIS/DSP/Include",
+                "../User/Bsp",
+                "../User/Business",
+                "../User/Algorithm",
+                "../User/App",
+                ".cmsis/include",
+                "RTE/_Super_Capacitor_500W_"
+            ],
+            "browse": {
+                "path": [
+                    "..",
+                    ".cmsis/include",
+                    "RTE/_Super_Capacitor_500W_"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

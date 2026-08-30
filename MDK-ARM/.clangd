@@ -1,0 +1,16 @@
+CompileFlags:
+  Add:
+    - -I"null\include"
+    - -Inull/include
+    - -Inull/include/libcxx
+    - -IE:\keil5\ARM\ARMCLANG\bin/include
+    - -IE:\keil5\ARM\ARMCLANG\bin/include/libcxx
+    - -IE:\keil5\ARM\ARMCLANG/include
+    - -IE:\keil5\ARM\ARMCLANG/include/libcxx
+    - -IF:\keil5\ARM\ARMCLANG/include
+    - -IF:\keil5\ARM\ARMCLANG/include/libcxx
+  Remove: []
+  CompilationDatabase: ./build/Super_Capacitor(500W)
+  Compiler: F:\keil5\ARM\ARMCLANG\bin\armclang.exe
+Diagnostics:
+  Suppress: "*"

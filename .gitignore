@@ -1,0 +1,8 @@
+# Keil MDK 编译输出
+MDK-ARM/build/
+MDK-ARM/Super_Capacitor(500W)/
+*.uvguix.*
+
+# 临时/备份文件
+*.bak
+*.tmp
