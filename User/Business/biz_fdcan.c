@@ -1,5 +1,24 @@
+/*
+*************************************************************************************************************************
+*                                                       BIZ_FDCAN
+*                        Business layer module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : biz_fdcan.c
+* Version       : V1.00.00
+* Programmer(s) : RuiYuan Lin
+*************************************************************************************************************************
+* Note(s)       : TBD
+*************************************************************************************************************************
+*                                                  MODIFICATION HISTORY
+*************************************************************************************************************************
+*   Version   Date          Author        Description
+*   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
+*************************************************************************************************************************
+*                                                     INCLUDE FILES
+*************************************************************************************************************************
+*/
+
 #include "biz_fdcan.h"
-#include "bsp_fdcan.h"
+#include "drv_fdcan.h"
 #include "bms_cmd.h"
 #include "SuperCap.h"
 #include "FreeRTOS.h"
@@ -7,48 +26,67 @@
 #include "queue.h"
 #include "string.h"
 
+/*
+*************************************************************************************************************************
+*                                                    PRIVATE DEFINES
+*************************************************************************************************************************
+*/
+
 #define MasterControlId   0x300
 #define MasterInitId	 	  0x301
 #define SuperCapId			  0x2FF
-
 #define MasterDeInit       0x00
 #define MasterPowerMeter   0x01
 #define MasterSupCapCtr    0x02
-
-extern bsp_fdcan_t user_fdcan_t;
-extern osMessageQueueId_t FDCANQueueHandle;
-extern SuperCap_Handle_t supcap;
-
-#ifdef USE_BMS_CMD
+#if USE_BMS_CMD
 typedef s32 (*SendCanMsgFunc)(void);
 void fdcan_rx_callback_func(void);
 s32 fdcan_filter_init(void);
 #endif
 
-s32 fdcan_init(void)
-{
-    #ifdef USE_BMS_CMD
-    fdcan_filter_init();
-    user_fdcan_t.rx_callback(fdcan_rx_callback_func);
-    #endif
-    return user_fdcan_t.start();
-}
+/*
+*************************************************************************************************************************
+*                                                     PRIVATE TYPES
+*************************************************************************************************************************
+*/
+
+/*
+*************************************************************************************************************************
+*                                                   PRIVATE VARIABLES
+*************************************************************************************************************************
+*/
+
+/*
+*************************************************************************************************************************
+*                                                    PUBLIC VARIABLES
+*************************************************************************************************************************
+*/
+
+extern drv_fdcan_t user_fdcan_t;
+extern osMessageQueueId_t FDCANQueueHandle;
+extern SuperCap_Handle_t supcap;
+
+/*
+*************************************************************************************************************************
+*                                               PRIVATE (HELPER) FUNCTIONS
+*************************************************************************************************************************
+*/
 
 
-s32 fdcan_send(uint8_t *data)
+static s32 fdcan_send(uint8_t *data)
 {
-    #ifdef USE_BMS_CMD
-    return user_fdcan_t.send(SuperCapId, BSP_STANDERD_ID, BSP_DATA_FRAME, BSP_DLC_BYTES_5, data);
+    #if USE_BMS_CMD
+    return user_fdcan_t.send(SuperCapId, DRV_STANDERD_ID, DRV_DATA_FRAME, DRV_DLC_BYTES_5, data);
     #else
-    return user_fdcan_t.send(SuperCapId, BSP_STANDERD_ID, BSP_DATA_FRAME, BSP_DLC_BYTES_8, data);
+    return user_fdcan_t.send(SuperCapId, DRV_STANDERD_ID, DRV_DATA_FRAME, DRV_DLC_BYTES_8, data);
     #endif
 }
 
-#ifdef USE_BMS_CMD
+#if USE_BMS_CMD
 extern BMS_Handle_t bms_handle;
 s32 fdcan_filter_init(void)
 {
-    return user_fdcan_t.add_id_to_filter(BSP_STANDERD_ID, BSP_FILTER_DUAL, MasterControlId, MasterInitId, BSP_FILTER_TO_RXFIFO0);
+    return user_fdcan_t.add_id_to_filter(DRV_STANDERD_ID, DRV_FILTER_DUAL, MasterControlId, MasterInitId, DRV_FILTER_TO_RXFIFO0);
 }
 
 static s32 SuperCap_SendMsg_Uninit(void)
@@ -84,7 +122,7 @@ s32 SuperCap_SendCanMsg(void)
 
 void fdcan_rx_callback_func(void)
 {
-    if (user_fdcan_t.rx_typedef.id_type == BSP_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterInitId)
+    if (user_fdcan_t.rx_typedef.id_type == DRV_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterInitId)
     {
       switch (user_fdcan_t.rx_data[0])
 		  {
@@ -95,7 +133,7 @@ void fdcan_rx_callback_func(void)
 		    case MasterSupCapCtr : bms_handle.status = POWER_CONTROL;
 		    break;
 		  }
-    }else if (user_fdcan_t.rx_typedef.id_type == BSP_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterControlId)
+    }else if (user_fdcan_t.rx_typedef.id_type == DRV_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterControlId)
     {
       float available_power = 0.0f;
       memcpy(&available_power, (uint8_t *)&user_fdcan_t.rx_data[0], sizeof(float));
@@ -130,3 +168,18 @@ s32 SuperCap_SendCanMsg(void)
 }
 
 #endif
+/*
+*************************************************************************************************************************
+*                                               GLOBAL FUNCTION PROTOTYPES
+*************************************************************************************************************************
+*/
+
+s32 fdcan_init(void)
+{
+    #if USE_BMS_CMD
+    fdcan_filter_init();
+    user_fdcan_t.rx_callback(fdcan_rx_callback_func);
+    #endif
+    return user_fdcan_t.start();
+}
+

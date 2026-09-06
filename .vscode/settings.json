@@ -1,0 +1,31 @@
+{
+    // 保存时自动用 clang-format 格式化
+    "editor.formatOnSave": true,
+
+    // C/C++ 文件使用 C/C++ 扩展 (ms-vscode.cpptools) 内置的 clang-format
+    "[c]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+    "[header]": {
+        "editor.defaultFormatter": "ms-vscode.cpptools"
+    },
+
+    // 使用工作区里的 .clang-format 文件（默认即为 "file"，写出来便于确认）
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_style": "file",
+    "C_Cpp.clang_format_fallbackStyle": "LLVM",
+
+    // ===== Git 配置 =====
+    // 固定使用 F 盘这份 Git（机器上唯一真实安装，避免 VSCode 探测多路径歧义）
+    "git.path": "F:\\GIT\\Git\\cmd\\git.exe",
+    // 关闭"新标签页写提交信息"模式：点✓直接用输入框提交，不再卡住
+    "git.useEditorAsCommitInput": false,
+    // 提交时若未暂存任何文件，自动暂存全部并提交，不再弹确认框
+    "git.enableSmartCommit": true,
+    "git.confirmForcePush": false,
+    // 推送前不弹同步确认
+    "git.autofetch": true
+}

@@ -6,3 +6,4 @@ MDK-ARM/Super_Capacitor(500W)/
 # 临时/备份文件
 *.bak
 *.tmp
+MDK-ARM/build_log.txt
