@@ -59,7 +59,7 @@ extern "C" {
 ```
 Project/
 ├── User/App/               Application layer: business logic, state machines, FreeRTOS tasks, control strategy
-├── User/Business/          Business layer: biz_xxx modules bridging app and peripherals
+├── User/HAL/               HAL layer: hal_xxx modules (BMS protocol, supercap control)
 ├── User/Algorithm/         Algorithm layer (service): PID, filters, calibration
 ├── User/Driver/            Driver layer: peripheral wrappers (drv_led.c / drv_hrtim.c)
 ├── Middlewares/            Third-party libraries (FreeRTOS, FatFs)
@@ -70,7 +70,7 @@ Project/
 
 | 规则 | 说明 |
 |------|------|
-| 单向依赖 | App → Business/Algorithm → Driver → HAL，上层可调用下层，下层不得调用上层 |
+| 单向依赖 | App → HAL/Algorithm → Driver → ST HAL库，上层可调用下层，下层不得调用上层 |
 | 接口隔离 | 每层通过 `.h` 暴露接口，`static` 隐藏内部实现 |
 | 禁止裸寄存器 | 业务代码不直接操作寄存器，统一经驱动层封装 |
 | 中断最小化 | ISR 内只做标志置位/数据搬运，处理逻辑放任务或主循环 |

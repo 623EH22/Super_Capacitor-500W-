@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       DRV_HRTIM
-*                            Driver module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : drv_hrtim.c
+*                                                         HAL_STORAGE
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : hal_storage.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -11,14 +11,19 @@
 *                                                  MODIFICATION HISTORY
 *************************************************************************************************************************
 *   Version   Date          Author        Description
-*   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
+*   V1.00.00  2026-09-07    RuiYuan Lin   Initial release
+*************************************************************************************************************************
+*/
+
+/*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#define DEF_DRV_HRTIM
-#include "drv_hrtim.h"
-#include "hrtim.h"
+#define DEF_HAL_STORAGE
+#include "hal_storage.h"
+#include "drv_flash.h"
+#include <stddef.h>
 
 /*
 *************************************************************************************************************************
@@ -26,8 +31,9 @@
 *************************************************************************************************************************
 */
 
-#define HRTIMA_PERIOD 53760
-#define MIN_COMPARE   128
+#define STORAGE_INVALID_ID  0x0000U
+#define STORAGE_ERASED_ID   0xFFFFU
+#define STORAGE_EXTENDED_ID 0xFF00U
 
 /*
 *************************************************************************************************************************
@@ -35,12 +41,25 @@
 *************************************************************************************************************************
 */
 
+typedef struct {
+    uint16_t id;
+    uint8_t  length;
+    void    *data;
+    void    *callback;
+} STORAGE_ITEM_T;
+
+typedef struct {
+    STORAGE_ITEM_T storage_item_table[STORAGE_ITEM_MAX_COUNT];
+    uint8_t        page;
+    uint8_t        item_count;
+} STORAGE_INFO_T;
+
 /*
 *************************************************************************************************************************
 *                                                   PRIVATE VARIABLES
 *************************************************************************************************************************
 */
-
+static STORAGE_INFO_T storage_page_info;
 /*
 *************************************************************************************************************************
 *                                                    PUBLIC VARIABLES
@@ -58,51 +77,37 @@
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
-
-void    HRTIM_Init(void);
-void    HRTIM_DeInit(void);
-void    HRTIM_Start(void);
-void    HRTIM_Stop(void);
-void    HRTIM_SetCompare(u16 compare);
-
-hrtim_t user_hrtim =
-    {
-        .init        = HRTIM_Init,
-        .deinit      = HRTIM_DeInit,
-        .start       = HRTIM_Start,
-        .stop        = HRTIM_Stop,
-        .set_compare = HRTIM_SetCompare};
-
-void HRTIM_Init(void)
+void Hal_StorageRegister(uint16_t id, void *data, uint8_t length, void *callback)
 {
-    HAL_HRTIM_WaveformCounterStart(&hhrtim1, HRTIM_TIMERID_TIMER_A);
+    STORAGE_INFO_T *ptr = &storage_page_info;
+    if (id == STORAGE_INVALID_ID || id == STORAGE_ERASED_ID || id == STORAGE_EXTENDED_ID || data == NULL || length == 0U) {
+        return;
+    }
+
+    if (ptr->item_count >= STORAGE_ITEM_MAX_COUNT) {
+        return;
+    }
+
+    ptr->storage_item_table[ptr->item_count].id       = id;
+    ptr->storage_item_table[ptr->item_count].data     = data;
+    ptr->storage_item_table[ptr->item_count].length   = length;
+    ptr->storage_item_table[ptr->item_count].callback = callback;
+
+    ptr->item_count++;
 }
 
-void HRTIM_DeInit(void)
+void Hal_StorageWrite(uint16_t id, void *data, uint8_t length)
 {
-    HAL_HRTIM_WaveformCounterStop(&hhrtim1, HRTIM_TIMERID_TIMER_A);
 }
 
-void HRTIM_Start(void)
+void Hal_StorageRead(uint16_t id, void *data, uint8_t length)
 {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA2);
 }
 
-void HRTIM_Stop(void)
+void Hal_StorageRecover(void)
 {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
-    HAL_HRTIM_WaveformOutputStop(&hhrtim1, HRTIM_OUTPUT_TA1);
-    HAL_HRTIM_WaveformOutputStop(&hhrtim1, HRTIM_OUTPUT_TA2);
-}
-
-void HRTIM_SetCompare(u16 compare)
-{
-    if (compare > HRTIMA_PERIOD)
-        compare = HRTIMA_PERIOD - MIN_COMPARE;
-    else if (compare < MIN_COMPARE)
-        compare = MIN_COMPARE;
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1, compare / 2);
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_2, (HRTIMA_PERIOD - compare / 2));
+    uint16_t        index;
+    STORAGE_INFO_T *ptr = &storage_page_info;
+    for (index = 0; index < ptr->item_count; index++) {
+    }
 }

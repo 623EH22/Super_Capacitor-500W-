@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       BIZ_FDCAN
-*                        Business layer module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : biz_fdcan.c
+*                                                        HAL_FDCAN
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : hal_fdcan.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -16,11 +16,11 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
-#include "biz_fdcan.h"
+#define DEF_HAL_FDCAN
+#include "hal_fdcan.h"
 #include "drv_fdcan.h"
-#include "bms_cmd.h"
-#include "SuperCap.h"
+#include "hal_bms_cmd.h"
+#include "hal_supercap.h"
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "queue.h"
@@ -39,9 +39,9 @@
 #define MasterPowerMeter   0x01
 #define MasterSupCapCtr    0x02
 #if USE_BMS_CMD
-typedef s32 (*SendCanMsgFunc)(void);
-void fdcan_rx_callback_func(void);
-s32 fdcan_filter_init(void);
+typedef s32 (*hal_send_can_msg_func_t)(void);
+void hal_fdcan_rx_callback_func(void);
+s32 hal_fdcan_filter_init(void);
 #endif
 
 /*
@@ -64,7 +64,7 @@ s32 fdcan_filter_init(void);
 
 extern drv_fdcan_t user_fdcan_t;
 extern osMessageQueueId_t FDCANQueueHandle;
-extern SuperCap_Handle_t supcap;
+extern hal_supercap_handle_t supcap;
 
 /*
 *************************************************************************************************************************
@@ -73,7 +73,7 @@ extern SuperCap_Handle_t supcap;
 */
 
 
-static s32 fdcan_send(uint8_t *data)
+static s32 hal_fdcan_send(uint8_t *data)
 {
     #if USE_BMS_CMD
     return user_fdcan_t.send(SuperCapId, DRV_STANDERD_ID, DRV_DATA_FRAME, DRV_DLC_BYTES_5, data);
@@ -83,54 +83,54 @@ static s32 fdcan_send(uint8_t *data)
 }
 
 #if USE_BMS_CMD
-extern BMS_Handle_t bms_handle;
-s32 fdcan_filter_init(void)
+extern hal_bms_handle_t bms_handle;
+s32 hal_fdcan_filter_init(void)
 {
     return user_fdcan_t.add_id_to_filter(DRV_STANDERD_ID, DRV_FILTER_DUAL, MasterControlId, MasterInitId, DRV_FILTER_TO_RXFIFO0);
 }
 
-static s32 SuperCap_SendMsg_Uninit(void)
+static s32 hal_supercap_send_msg_uninit(void)
 {
   uint8_t txdata[5] = {0};
   txdata[4] = bms_handle.status;  
-  return fdcan_send((uint8_t *)&txdata);
+  return hal_fdcan_send((uint8_t *)&txdata);
 }
 
-static s32 SuperCap_SendMsg_PowerMeter(void)
+static s32 hal_supercap_send_msg_power_meter(void)
 {
   uint8_t txdata[5] = {0};
   float Chassis_Power = supcap.ele.inp_vol * supcap.ele.inp_cur;
   memcpy(&txdata[0], &Chassis_Power, sizeof(float));
   txdata[4] = bms_handle.status;  
-  return fdcan_send((uint8_t *)&txdata) == HAL_OK;
+  return hal_fdcan_send((uint8_t *)&txdata) == HAL_OK;
 }
 
-static s32 SuperCap_SendMsg_PowerControl(void)
+static s32 hal_supercap_send_msg_power_control(void)
 {
   uint8_t txdata[5] = {0};
   float SuperCap_Power = supcap.ele.cap_vol * supcap.ele.cap_cur;
   memcpy(&txdata[0], &SuperCap_Power, sizeof(float));
   txdata[4] = bms_handle.status;
-  return fdcan_send((uint8_t *)&txdata) == HAL_OK;
+  return hal_fdcan_send((uint8_t *)&txdata) == HAL_OK;
 }
 
-s32 SuperCap_SendCanMsg(void)
+s32 hal_supercap_send_can_msg(void)
 {
-  SendCanMsgFunc can_msg[3] = {SuperCap_SendMsg_Uninit,SuperCap_SendMsg_PowerMeter,SuperCap_SendMsg_PowerControl};
+  hal_send_can_msg_func_t can_msg[3] = {hal_supercap_send_msg_uninit,hal_supercap_send_msg_power_meter,hal_supercap_send_msg_power_control};
   return can_msg[bms_handle.status]();
 }
 
-void fdcan_rx_callback_func(void)
+void hal_fdcan_rx_callback_func(void)
 {
     if (user_fdcan_t.rx_typedef.id_type == DRV_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterInitId)
     {
       switch (user_fdcan_t.rx_data[0])
 		  {
-		    case MasterDeInit : bms_handle.status = UNINIT;
+		    case MasterDeInit : bms_handle.status = BMS_UNINIT;
 		    break;
-		    case MasterPowerMeter: bms_handle.status = POWER_METER;
+		    case MasterPowerMeter: bms_handle.status = BMS_POWER_METER;
 		    break;
-		    case MasterSupCapCtr : bms_handle.status = POWER_CONTROL;
+		    case MasterSupCapCtr : bms_handle.status = BMS_POWER_CONTROL;
 		    break;
 		  }
     }else if (user_fdcan_t.rx_typedef.id_type == DRV_STANDERD_ID && user_fdcan_t.rx_typedef.id == MasterControlId)
@@ -154,7 +154,7 @@ void fdcan_rx_callback_func(void)
 }
 #else
 
-s32 SuperCap_SendCanMsg(void)
+s32 hal_supercap_send_can_msg(void)
 {
     // 非BMS模式下只发送不接收
     u8 txdata[8] = {0};
@@ -164,7 +164,7 @@ s32 SuperCap_SendCanMsg(void)
 		taskEXIT_CRITICAL();
     memcpy(&txdata[0], &battery_power, sizeof(float));
     memcpy(&txdata[4], &load_power, sizeof(float));
-    return fdcan_send(txdata);
+    return hal_fdcan_send(txdata);
 }
 
 #endif
@@ -174,11 +174,11 @@ s32 SuperCap_SendCanMsg(void)
 *************************************************************************************************************************
 */
 
-s32 fdcan_init(void)
+s32 hal_fdcan_init(void)
 {
     #if USE_BMS_CMD
-    fdcan_filter_init();
-    user_fdcan_t.rx_callback(fdcan_rx_callback_func);
+    hal_fdcan_filter_init();
+    user_fdcan_t.rx_callback(hal_fdcan_rx_callback_func);
     #endif
     return user_fdcan_t.start();
 }

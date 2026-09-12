@@ -341,7 +341,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32G474xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32G4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm;../User/App;../User/Business;../User/Driver;../Middlewares/ST/ARM/DSP/Inc</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc;../Drivers/STM32G4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32G4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../User/Algorithm;../User/App;../User/HAL;../User/Driver;../Middlewares/ST/ARM/DSP/Inc;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -363,7 +363,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -372,7 +372,7 @@
             <TextAddressRange></TextAddressRange>
             <DataAddressRange></DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\Super_Capacitor(500W)\Super_Capacitor(500W).sct</ScatterFile>
+            <ScatterFile>.\stm32g474xx_flash.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -1103,7 +1103,17 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Driver</GroupName>
+          <GroupName>User</GroupName>
+          <Files>
+            <File>
+              <FileName>platform_config.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\platform_config.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/Driver</GroupName>
           <Files>
             <File>
               <FileName>drv_analog.c</FileName>
@@ -1168,7 +1178,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Algorihm</GroupName>
+          <GroupName>User/Algorithm</GroupName>
           <Files>
             <File>
               <FileName>PID.c</FileName>
@@ -1183,47 +1193,57 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Business</GroupName>
+          <GroupName>User/HAL</GroupName>
           <Files>
             <File>
-              <FileName>SuperCap.c</FileName>
+              <FileName>hal_supercap.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Business\SuperCap.c</FilePath>
+              <FilePath>..\User\HAL\hal_supercap.c</FilePath>
             </File>
             <File>
-              <FileName>SuperCap.h</FileName>
+              <FileName>hal_supercap.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\Business\SuperCap.h</FilePath>
+              <FilePath>..\User\HAL\hal_supercap.h</FilePath>
             </File>
             <File>
-              <FileName>biz_fdcan.c</FileName>
+              <FileName>hal_fdcan.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Business\biz_fdcan.c</FilePath>
+              <FilePath>..\User\HAL\hal_fdcan.c</FilePath>
             </File>
             <File>
-              <FileName>biz_fdcan.h</FileName>
+              <FileName>hal_fdcan.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\Business\biz_fdcan.h</FilePath>
+              <FilePath>..\User\HAL\hal_fdcan.h</FilePath>
             </File>
             <File>
-              <FileName>biz_usart.c</FileName>
+              <FileName>hal_usart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Business\biz_usart.c</FilePath>
+              <FilePath>..\User\HAL\hal_usart.c</FilePath>
             </File>
             <File>
-              <FileName>biz_usart.h</FileName>
+              <FileName>hal_usart.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\Business\biz_usart.h</FilePath>
+              <FilePath>..\User\HAL\hal_usart.h</FilePath>
             </File>
             <File>
-              <FileName>bms_cmd.h</FileName>
+              <FileName>hal_bms_cmd.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\User\Business\bms_cmd.h</FilePath>
+              <FilePath>..\User\HAL\hal_bms_cmd.h</FilePath>
+            </File>
+            <File>
+              <FileName>hal_storage.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\HAL\hal_storage.c</FilePath>
+            </File>
+            <File>
+              <FileName>hal_storage.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\HAL\hal_storage.h</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>App</GroupName>
+          <GroupName>User/App</GroupName>
           <Files>
             <File>
               <FileName>system_init.c</FileName>

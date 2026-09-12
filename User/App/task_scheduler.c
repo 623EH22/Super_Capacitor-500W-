@@ -16,18 +16,18 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#define DEF_TASK_SCHEDULER
 #include "task_scheduler.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
 #include "queue.h"
 #include "message_buffer.h"
-#include "biz_usart.h"
+#include "hal_usart.h"
 #include "config.h"
-#include "biz_fdcan.h"
-#include "SuperCap.h"
-#include "bms_cmd.h"
+#include "hal_fdcan.h"
+#include "hal_supercap.h"
+#include "hal_bms_cmd.h"
 #include "drv_rgb.h"
 #include "stm32g4xx.h"
 
@@ -56,13 +56,13 @@
 */
 
 #if USE_BMS_CMD
-extern BMS_Handle_t bms_handle;
+extern hal_bms_handle_t bms_handle;
 #endif
 extern osThreadId_t CAN_Send_TaskHandle;
 extern osThreadId_t UartTaskHandle;
 extern MessageBufferHandle_t uartMessageBuffer;
 extern osMessageQueueId_t FDCANQueueHandle;
-extern SuperCap_Handle_t supcap;
+extern hal_supercap_handle_t supcap;
 
 /*
 *************************************************************************************************************************
@@ -80,19 +80,19 @@ void StartCAN_Send_Task(void *argument)
 {
     for(;;)
     {
-        SuperCap_SendCanMsg();
+        hal_supercap_send_can_msg();
         osDelay(1);
     }
 }
 
 void StartUartTask(void *argument)
 {
-	usart_init();
+	hal_usart_init();
     for(;;)
     {
 				u8 rx_data[128];
         size_t received_size = xMessageBufferReceive(uartMessageBuffer, rx_data, sizeof(rx_data), portMAX_DELAY);
-        uart_data_process((char*)rx_data, received_size);
+        hal_uart_data_process((char*)rx_data, received_size);
     }
 }
 
@@ -100,7 +100,7 @@ void StartUartTxTask(void *argument)
 {
 	for(;;)
 	{ 
-		printf_data();
+		hal_printf_data();
 		osDelay(100);
 	}
 }
@@ -112,11 +112,11 @@ void StartRGBTask(void *argument)
         #if USE_BMS_CMD
         switch (bms_handle.status)
         {
-            case UNINIT: RGB_Set(ON,OFF,OFF);
+            case BMS_UNINIT: RGB_Set(ON,OFF,OFF);
             break;
-            case POWER_METER: RGB_Set(OFF,ON,OFF);
+            case BMS_POWER_METER: RGB_Set(OFF,ON,OFF);
             break;
-            case POWER_CONTROL: RGB_Set(OFF,OFF,ON);
+            case BMS_POWER_CONTROL: RGB_Set(OFF,OFF,ON);
             break;
             default: RGB_Set(OFF,OFF,OFF);
             break;

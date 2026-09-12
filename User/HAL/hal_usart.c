@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
 *                                                       BIZ_USART
-*                        Business layer module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : biz_usart.c
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : hal_usart.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -16,8 +16,8 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
-#include "biz_usart.h"
+#define DEF_HAL_USART
+#include "hal_usart.h"
 #include "drv_usart.h"
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
@@ -26,7 +26,7 @@
 #include "stdbool.h"
 #include "stdlib.h"
 #include "drv_analog.h"
-#include "SuperCap.h"
+#include "hal_supercap.h"
 
 /*
 *************************************************************************************************************************
@@ -53,7 +53,7 @@
 */
 
 extern uart_t                user_uart_t;
-extern SuperCap_Handle_t     supcap;
+extern hal_supercap_handle_t     supcap;
 extern MessageBufferHandle_t uartMessageBuffer;
 char                         global_stats_buffer[1024];
 extern u16                   shutdown;
@@ -71,19 +71,19 @@ extern float                 available_power;
 *************************************************************************************************************************
 */
 
-void        uart_rx_callback_func(u16 size);
+void        hal_uart_rx_callback_func(u16 size);
 
 uart_data_t uart_data = {0};
 
 /*初始化串口*/
-s32 usart_init(void)
+s32 hal_usart_init(void)
 {
-    user_uart_t.rx_callback_register(uart_rx_callback_func);  // 注册回调函数
+    user_uart_t.rx_callback_register(hal_uart_rx_callback_func);  // 注册回调函数
     return user_uart_t.init();
 }
 
 /*中断回调*/
-void uart_rx_callback_func(u16 size)
+void hal_uart_rx_callback_func(u16 size)
 {
     BaseType_t pxHighterPriorityTaskWoken = pdFALSE;
     xMessageBufferSendFromISR(uartMessageBuffer, user_uart_t.rx_buffer, size, &pxHighterPriorityTaskWoken);
@@ -91,7 +91,7 @@ void uart_rx_callback_func(u16 size)
 }
 
 /*数据处理*/
-void uart_data_process(char *pdata, u16 size)
+void hal_uart_data_process(char *pdata, u16 size)
 {
     char ch         = pdata[size - 1];  // 获取最后一个字节
     pdata[size - 1] = '\0';             // 将'\r'替换为字符串结束符
@@ -131,7 +131,7 @@ void uart_data_process(char *pdata, u16 size)
     }
 }
 
-void PrintCPUStats(void)
+void hal_print_cpu_stats(void)
 {
     static char statsBuffer[512];  // 确保缓冲区够大，容纳所有任务信息
 
@@ -144,9 +144,9 @@ void PrintCPUStats(void)
     user_uart_t.printf("\r\n--- END ---\r\n");
 }
 
-void printf_data(void)
+void hal_printf_data(void)
 {
-    //	 PrintCPUStats();
+    //	 hal_print_cpu_stats();
     if (uart_data.print_ready) {
         // 如果打印准备就绪，执行相关操作（例如打印数据）
         //       user_uart_t.printf("%f,%f,%f,%f,%f,%f\n",user_analog_t.original_voltage[0],user_analog_t.original_voltage[1],user_analog_t.original_voltage[2],user_analog_t.original_voltage[3],user_analog_t.original_voltage[4],user_analog_t.original_voltage[5]);

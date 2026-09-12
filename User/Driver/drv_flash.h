@@ -12,11 +12,7 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*************************************************************************************************************************
-*                                                     INCLUDE FILES
-*************************************************************************************************************************
 */
-
 #ifndef DRV_FLASH_H
 #define DRV_FLASH_H
 
@@ -25,22 +21,48 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
+#include "platform_config.h"
 
-#include "config.h"
+/*
+*************************************************************************************************************************
+*                                                     EXTERN DEFINES
+*************************************************************************************************************************
+*/
+
+#ifdef DEF_DRV_FLASH
+#define EXT_DRV_FLASH
+#else
+#define EXT_DRV_FLASH extern
+#endif
 
 /*
 *************************************************************************************************************************
 *                                                     PUBLIC DEFINES
 *************************************************************************************************************************
 */
-#define FLASH_PAGE_SIZE 2048
-#define FEE_START_ADDR  0x0801E000
+#define FLASH_BANK_MEM_SIZE        0x10000U
+
+#define STORAGE_SIZE               (STORAGE_END_ADDR - STORAGE_START_ADDR)
+#define STORAGE_USE_PAGE_NUM       (STORAGE_SIZE / FLASH_PAGE_SIZE)
+#define STORAGE_PAGE_ADDR(x)       (STORAGE_START_ADDR + ((x) * FLASH_PAGE_SIZE))
+
+/* Storage page bit mask for selecting specific storage pages */
+#define STORAGE_ERASE_PAGE_MASK(x) (1U << (x))
+
 /*
 *************************************************************************************************************************
 *                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
+typedef void (*DEF_FLASH_WRITE)(uint32_t address, void *data, uint32_t size);
+typedef void (*DEF_FLASH_READ)(uint32_t address, void *data, uint32_t size);
+typedef void (*DEF_FLASH_ERASE_PAGE)(uint32_t mask);
 
+typedef struct drv_flash_func_handle_t {
+    DEF_FLASH_WRITE      flash_write;
+    DEF_FLASH_READ       flash_read;
+    DEF_FLASH_ERASE_PAGE flash_page_erase;
+} DRV_FLASH_FUNC_HANDLE_T;
 /*
 *************************************************************************************************************************
 *                                                   PRIVATE VARIABLES
@@ -55,14 +77,13 @@
 
 /*
 *************************************************************************************************************************
-*                                               PRIVATE (HELPER) FUNCTIONS
-*************************************************************************************************************************
-*/
-
-/*
-*************************************************************************************************************************
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
 
-#endif
+EXT_DRV_FLASH DRV_FLASH_FUNC_HANDLE_T DrvFlashFuncHdl;
+EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Write(uint32_t address, void *data, uint32_t size);
+EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Read(uint32_t address, void *data, uint32_t size);
+EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Page_Erase(uint32_t mask);
+
+#endif /* DRV_FLASH_H */

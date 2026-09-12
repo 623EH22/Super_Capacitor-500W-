@@ -1,7 +1,7 @@
 /*
 *************************************************************************************************************************
-*                                                        SUPERCAP
-*                        Business layer module for the 500W Super-Capacitor Digital Power Supply.
+*                                                       HAL_SUPERCAP
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
 * Filename      : SuperCap.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
@@ -16,15 +16,15 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
-#include "SuperCap.h"
+#define DEF_HAL_SUPERCAP
+#include "hal_supercap.h"
 #include "drv_analog.h"
 #include "drv_hrtim.h"
 #include "PID.h"
-#include "biz_usart.h"
+#include "hal_usart.h"
 #include "stm32g4xx.h"
-#include "bms_cmd.h"
-#include "biz_fdcan.h"
+#include "hal_bms_cmd.h"
+#include "hal_fdcan.h"
 
 /*
 *************************************************************************************************************************
@@ -73,7 +73,7 @@
 #define INP_CURR_ERR_OFFSET    0.7599f
 #define CAP_CURR_ERR_OFFSET    1.11661f
 #if USE_BMS_CMD
-BMS_Handle_t bms_handle;
+hal_bms_handle_t bms_handle;
 #endif
 
 /*
@@ -118,17 +118,17 @@ u16                shutdown = 0;
 *************************************************************************************************************************
 */
 
-SuperCap_Handle_t supcap = {0};
-void              supercap_control(void);
-void              supercap_calc(void);
+hal_supercap_handle_t supcap = { 0 };
+void                  hal_supercap_control(void);
+void                  hal_supercap_calc(void);
 
-bool              SuperCap_Init(void)
+bool                  hal_supercap_init(void)
 {
-    float cur_kpid[7] = {CUR_KP, CUR_KI, CUR_KD, MAX_DUTY, -MAX_DUTY, MAX_DUTY, MIN_DUTY};
+    float cur_kpid[7] = { CUR_KP, CUR_KI, CUR_KD, MAX_DUTY, -MAX_DUTY, MAX_DUTY, MIN_DUTY };
     if (!PID_Handle_Init(&cur_pid, cur_kpid, Inc_Pid))
         return false;
 #if USE_BMS_CMD
-    bms_cmd_init(&bms_handle);
+    hal_bms_cmd_init(&bms_handle);
 #endif
     supcap.iref        = 0.0f;
     supcap.tick        = VOL_RING_REPEAT;
@@ -136,7 +136,7 @@ bool              SuperCap_Init(void)
 
     supcap.OpenPwmFlag = false;
     user_analog_t.init();
-    user_analog_t.register_callback(supercap_control);
+    user_analog_t.register_callback(hal_supercap_control);
     user_hrtim.init();
 #ifdef MEASURE
     user_hrtim.start();
@@ -145,7 +145,7 @@ bool              SuperCap_Init(void)
     return true;
 }
 
-bool SuperCap_Refresh(void)
+bool hal_supercap_refresh(void)
 {
     user_hrtim.stop();
 
@@ -163,7 +163,7 @@ bool SuperCap_Refresh(void)
     return true;
 }
 
-void supercap_control(void)
+void hal_supercap_control(void)
 {
     //    run_time_start = DWT->CYCCNT;
     //    run_freq = DWT->CYCCNT;
@@ -178,20 +178,20 @@ void supercap_control(void)
 #ifdef MEASURE
     user_hrtim.set_compare(uart_data.uint16_data);  // 设置一个固定的占空比
 #else
-    supercap_calc();
+    hal_supercap_calc();
 #endif
 
     //	run_time_end = DWT->CYCCNT;
     //	run_time_diff = run_time_end - run_time_start;
 }
 
-void supercap_calc(void)
+void hal_supercap_calc(void)
 {
     float        max_cap_cur     = 0.0f;
     static float available_power = 0.0f;
 #if USE_BMS_CMD
-    if ((bms_handle.status != POWER_CONTROL && supcap.OpenPwmFlag == true) || bms_handle.control_sign == false) {
-        SuperCap_Refresh();
+    if ((bms_handle.status != BMS_POWER_CONTROL && supcap.OpenPwmFlag == true) || bms_handle.control_sign == false) {
+        hal_supercap_refresh();
         return;
     }
     available_power = bms_handle.Available_Power;
@@ -240,6 +240,6 @@ void supercap_calc(void)
 
     if ((supcap.ele.inp_vol > MAX_INPUT_VOLTAGE || supcap.ele.inp_vol < MIN_INPUT_VOLTAGE) || shutdown >= 5000) {
         shutdown = 0;
-        SuperCap_Refresh();
+        hal_supercap_refresh();
     }
 }

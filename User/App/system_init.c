@@ -16,11 +16,11 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#define DEF_SYSTEM_INIT
 #include "system_init.h"
-#include "biz_usart.h"
-#include "biz_fdcan.h"
-#include "SuperCap.h"
+#include "hal_usart.h"
+#include "hal_fdcan.h"
+#include "hal_supercap.h"
 #include "task_scheduler.h"
 
 /*
@@ -61,8 +61,8 @@
 
 void system_init(void)
 {
-//    usart_init();
-    SuperCap_Init();
-    fdcan_init();
+//    hal_usart_init();
+    hal_supercap_init();
+    hal_fdcan_init();
 		configureTimerForRunTimeStats();
 }

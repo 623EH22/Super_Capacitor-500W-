@@ -1,7 +1,6 @@
 {
     // 保存时自动用 clang-format 格式化
     "editor.formatOnSave": true,
-
     // C/C++ 文件使用 C/C++ 扩展 (ms-vscode.cpptools) 内置的 clang-format
     "[c]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"
@@ -12,12 +11,30 @@
     "[header]": {
         "editor.defaultFormatter": "ms-vscode.cpptools"
     },
-
     // 使用工作区里的 .clang-format 文件（默认即为 "file"，写出来便于确认）
     "C_Cpp.formatting": "clangFormat",
     "C_Cpp.clang_format_style": "file",
     "C_Cpp.clang_format_fallbackStyle": "LLVM",
-
+    "C_Cpp.default.compilerPath": "F:/keil5/ARM/ARMCLANG/bin/armclang.exe",
+    "C_Cpp.default.intelliSenseMode": "windows-clang-arm",
+    "C_Cpp.default.includePath": [
+        "F:/keil5/ARM/ARMCLANG/include",
+        "${workspaceFolder}/Core/Inc",
+        "${workspaceFolder}/Drivers/STM32G4xx_HAL_Driver/Inc",
+        "${workspaceFolder}/Drivers/STM32G4xx_HAL_Driver/Inc/Legacy",
+        "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32G4xx/Include",
+        "${workspaceFolder}/Drivers/CMSIS/Include",
+        "${workspaceFolder}/Drivers/CMSIS/DSP/Include",
+        "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/include",
+        "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2",
+        "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F",
+        "${workspaceFolder}/Middlewares/ST/ARM/DSP/Inc",
+        "${workspaceFolder}/User",
+        "${workspaceFolder}/User/Algorithm",
+        "${workspaceFolder}/User/App",
+        "${workspaceFolder}/User/Business",
+        "${workspaceFolder}/User/Driver"
+    ],
     // ===== Git 配置 =====
     // 固定使用 F 盘这份 Git（机器上唯一真实安装，避免 VSCode 探测多路径歧义）
     "git.path": "F:\\GIT\\Git\\cmd\\git.exe",

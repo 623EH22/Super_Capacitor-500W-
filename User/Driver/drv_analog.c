@@ -16,7 +16,7 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#define DEF_DRV_ANALOG
 #include "drv_analog.h"
 #include "opamp.h"
 #include "adc.h"

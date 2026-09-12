@@ -1,7 +1,7 @@
 /*
 *************************************************************************************************************************
-*                                                        SUPERCAP
-*                        Business layer module for the 500W Super-Capacitor Digital Power Supply.
+*                                                       HAL_SUPERCAP
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
 * Filename      : SuperCap.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
@@ -12,22 +12,30 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*************************************************************************************************************************
-*                                                     INCLUDE FILES
-*************************************************************************************************************************
 */
 
-#ifndef SUPERCAP_H
-#define SUPERCAP_H
+#ifndef HAL_SUPERCAP_H
+#define HAL_SUPERCAP_H
 
 /*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
 #include "config.h"
 #include "stdbool.h"
+
+/*
+*************************************************************************************************************************
+*                                                     EXTERN DEFINES
+*************************************************************************************************************************
+*/
+
+#ifdef DEF_HAL_SUPERCAP
+#define EXT_HAL_SUPERCAP
+#else
+#define EXT_HAL_SUPERCAP extern
+#endif
 
 /*
 *************************************************************************************************************************
@@ -35,13 +43,13 @@
 *************************************************************************************************************************
 */
 
-#define MAX_POWER            100.0f
-#define MAX_CHARGE_CURR      40.0f
-#define MAX_DISCHARGE_CURR  -45.0f
+#define MAX_POWER          100.0f
+#define MAX_CHARGE_CURR    40.0f
+#define MAX_DISCHARGE_CURR -45.0f
 #if USE_BMS_CMD
-#define MAX_DISCHARGE_POWER  -450.0f
+#define MAX_DISCHARGE_POWER -450.0f
 #endif
-#define MAX_CHARGE_POWER	 MAX_POWER - 5.0f
+#define MAX_CHARGE_POWER MAX_POWER - 5.0f
 
 /*
 *************************************************************************************************************************
@@ -49,23 +57,23 @@
 *************************************************************************************************************************
 */
 
-typedef struct 
+typedef struct
 {
     volatile float inp_vol;
     volatile float cap_vol;
     volatile float inp_cur;
     volatile float oup_cur;
     volatile float cap_cur;
-}SuperCap_Ele_t;
+} SuperCap_Ele_t;
 
-typedef struct 
+typedef struct
 {
     SuperCap_Ele_t ele;
     volatile float iref;
-    volatile u8 tick;
-    volatile u16 pwm_val;
-    volatile bool OpenPwmFlag;
-}SuperCap_Handle_t;
+    volatile u8    tick;
+    volatile u16   pwm_val;
+    volatile bool  OpenPwmFlag;
+} hal_supercap_handle_t;
 
 /*
 *************************************************************************************************************************
@@ -79,7 +87,7 @@ typedef struct
 *************************************************************************************************************************
 */
 
-extern SuperCap_Handle_t supcap;
+EXT_HAL_SUPERCAP hal_supercap_handle_t supcap;
 
 /*
 *************************************************************************************************************************
@@ -93,6 +101,6 @@ extern SuperCap_Handle_t supcap;
 *************************************************************************************************************************
 */
 
-bool SuperCap_Init(void);
+EXT_HAL_SUPERCAP bool hal_supercap_init(void);
 
-#endif /* SUPERCAP_H */
+#endif /* HAL_SUPERCAP_H */

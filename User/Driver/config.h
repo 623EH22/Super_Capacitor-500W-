@@ -12,20 +12,15 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*************************************************************************************************************************
-*                                                     INCLUDE FILES
-*************************************************************************************************************************
 */
 
 #ifndef CONFIG_H
 #define CONFIG_H
-
 /*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
 #include "stdint.h"
 
 /*
@@ -35,14 +30,14 @@
 */
 
 /*data_type*/
-#define u8  uint8_t
-#define u16 uint16_t
-#define u32 uint32_t
-#define s8  int8_t
-#define s16 int16_t
-#define s32 int32_t
-#define f32 float
-#define f64 double
+#define u8           uint8_t
+#define u16          uint16_t
+#define u32          uint32_t
+#define s8           int8_t
+#define s16          int16_t
+#define s32          int32_t
+#define f32          float
+#define f64          double
 #define USER_FDCAN   hfdcan2
 #define DEBUG_SERIAL huart2
 

@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       DRV_HRTIM
-*                            Driver module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : drv_hrtim.c
+*                                                        BMS_CMD
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : bms_cmd.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -12,26 +12,67 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
+*/
+
+#ifndef HAL_BMS_CMD_H
+#define HAL_BMS_CMD_H
+
+
+/*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#define DEF_DRV_HRTIM
-#include "drv_hrtim.h"
-#include "hrtim.h"
+#include "stdbool.h"
+#include "config.h"
 
 /*
 *************************************************************************************************************************
-*                                                    PRIVATE DEFINES
+*                                                     EXTERN DEFINES
 *************************************************************************************************************************
 */
 
-#define HRTIMA_PERIOD 53760
-#define MIN_COMPARE   128
+#ifdef DEF_HAL_BMS_CMD
+#define EXT_HAL_BMS_CMD
+#else
+#define EXT_HAL_BMS_CMD extern
+#endif
 
 /*
 *************************************************************************************************************************
-*                                                     PRIVATE TYPES
+*                                                     PUBLIC DEFINES
+*************************************************************************************************************************
+*/
+
+#define USE_BMS_CMD 1
+#if USE_BMS_CMD
+
+typedef enum
+{
+    BMS_UNINIT = 0,
+    BMS_POWER_METER,
+    BMS_POWER_CONTROL
+}hal_bms_status_t;
+
+typedef struct
+{
+    volatile hal_bms_status_t status;
+    volatile bool control_sign;
+    volatile float Available_Power;
+}hal_bms_handle_t;
+
+static inline void hal_bms_cmd_init(hal_bms_handle_t *bms_handle)
+{
+    bms_handle->status = BMS_UNINIT;
+    bms_handle->control_sign = false;
+    bms_handle->Available_Power = 0.0f;
+}
+
+#endif
+
+/*
+*************************************************************************************************************************
+*                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
 
@@ -59,50 +100,4 @@
 *************************************************************************************************************************
 */
 
-void    HRTIM_Init(void);
-void    HRTIM_DeInit(void);
-void    HRTIM_Start(void);
-void    HRTIM_Stop(void);
-void    HRTIM_SetCompare(u16 compare);
-
-hrtim_t user_hrtim =
-    {
-        .init        = HRTIM_Init,
-        .deinit      = HRTIM_DeInit,
-        .start       = HRTIM_Start,
-        .stop        = HRTIM_Stop,
-        .set_compare = HRTIM_SetCompare};
-
-void HRTIM_Init(void)
-{
-    HAL_HRTIM_WaveformCounterStart(&hhrtim1, HRTIM_TIMERID_TIMER_A);
-}
-
-void HRTIM_DeInit(void)
-{
-    HAL_HRTIM_WaveformCounterStop(&hhrtim1, HRTIM_TIMERID_TIMER_A);
-}
-
-void HRTIM_Start(void)
-{
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1);
-    HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA2);
-}
-
-void HRTIM_Stop(void)
-{
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_RESET);
-    HAL_HRTIM_WaveformOutputStop(&hhrtim1, HRTIM_OUTPUT_TA1);
-    HAL_HRTIM_WaveformOutputStop(&hhrtim1, HRTIM_OUTPUT_TA2);
-}
-
-void HRTIM_SetCompare(u16 compare)
-{
-    if (compare > HRTIMA_PERIOD)
-        compare = HRTIMA_PERIOD - MIN_COMPARE;
-    else if (compare < MIN_COMPARE)
-        compare = MIN_COMPARE;
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_1, compare / 2);
-    __HAL_HRTIM_SetCompare(&hhrtim1, HRTIM_TIMERINDEX_TIMER_A, HRTIM_COMPAREUNIT_2, (HRTIMA_PERIOD - compare / 2));
-}
+#endif

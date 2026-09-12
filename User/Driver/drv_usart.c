@@ -16,7 +16,7 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#define DEF_DRV_USART
 #include "drv_usart.h"
 #include "usart.h"
 #include <stdio.h>

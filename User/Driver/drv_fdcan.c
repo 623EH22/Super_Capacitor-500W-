@@ -16,7 +16,7 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#define DEF_DRV_FDCAN
 #include "drv_fdcan.h"
 
 #if USE_RTOS
@@ -103,7 +103,7 @@ static inline drv_fdcan_filter_status_t user_fdcan_add_id_to_filter(u32 id_type,
     return fdcan_add_id_to_filter(&USER_FDCAN, id_type, filter_type, id1, id2, fifos);
 }
 
-static inline s32 fdcan_send(FDCAN_HandleTypeDef *hfdcan, u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata)
+static inline s32 hal_fdcan_send(FDCAN_HandleTypeDef *hfdcan, u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata)
 {
     FDCAN_TxHeaderTypeDef sTxHeader;
     sTxHeader.Identifier          = id;
@@ -121,7 +121,7 @@ static inline s32 fdcan_send(FDCAN_HandleTypeDef *hfdcan, u32 id, u32 id_type, u
 
 static inline s32 user_fdcan_send(u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata)
 {
-    return fdcan_send(&USER_FDCAN, id, id_type, txframtype, lenth, pdata);
+    return hal_fdcan_send(&USER_FDCAN, id, id_type, txframtype, lenth, pdata);
 }
 
 /*

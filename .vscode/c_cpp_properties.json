@@ -1,0 +1,51 @@
+{
+    "configurations": [
+        {
+            "name": "STM32G474 ARMCLANG",
+            "compilerPath": "F:/keil5/ARM/ARMCLANG/bin/armclang.exe",
+            "compilerArgs": [
+                "--target=arm-arm-none-eabi",
+                "-mcpu=cortex-m4",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard"
+            ],
+            "intelliSenseMode": "windows-clang-arm",
+            "cStandard": "c99",
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32G474xx",
+                "ARM_MATH_CM4",
+                "__FPU_PRESENT=1U"
+            ],
+            "includePath": [
+                "F:/keil5/ARM/ARMCLANG/include",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Drivers/STM32G4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/STM32G4xx_HAL_Driver/Inc/Legacy",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32G4xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Drivers/CMSIS/DSP/Include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/include",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2",
+                "${workspaceFolder}/Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F",
+                "${workspaceFolder}/Middlewares/ST/ARM/DSP/Inc",
+                "${workspaceFolder}/User",
+                "${workspaceFolder}/User/Algorithm",
+                "${workspaceFolder}/User/App",
+                "${workspaceFolder}/User/Business",
+                "${workspaceFolder}/User/Driver",
+                "${workspaceFolder}/MDK-ARM/RTE/_Super_Capacitor_500W_"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/Core",
+                    "${workspaceFolder}/Drivers",
+                    "${workspaceFolder}/Middlewares",
+                    "${workspaceFolder}/User"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}
