@@ -58,7 +58,12 @@
 *                                                    PUBLIC VARIABLES
 *************************************************************************************************************************
 */
-
+typedef enum hal_storage_status_e {
+    STORAGE_OK,
+    STORAGE_PAGE_MAGIC_ERR,
+    STORAGE_PAGE_STATUS_ERR,
+    STORAGE_DATA_ERR,
+} HAL_STORAGE_STATUS_E;
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS
@@ -72,5 +77,6 @@
 */
 
 EXT_HAL_STORAGE void Hal_StorageRegister(uint16_t id, void *data, uint8_t length, void *callback);
+EXT_HAL_STORAGE void Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length);
 
 #endif /* HAL_STORAGE_H */

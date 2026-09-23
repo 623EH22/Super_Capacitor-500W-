@@ -19,7 +19,7 @@
 #define DEF_DRV_FDCAN
 #include "drv_fdcan.h"
 
-#if USE_RTOS
+#if USE_FREERTOS
 #include "FreeRTOS.h"
 #include "task.h"
 #endif
@@ -70,7 +70,7 @@ static inline s32                       user_fdcan_start(void)
 
 static drv_fdcan_filter_status_t fdcan_add_id_to_filter(FDCAN_HandleTypeDef *hfdcan, u32 id_type, u32 filter_type, u32 id1, u32 id2, u32 fifos)
 {
-#if USE_RTOS
+#if USE_FREERTOS
     vTaskSuspendAll();
 #endif
     FDCAN_FilterTypeDef sFilterConfig;
@@ -92,7 +92,7 @@ static drv_fdcan_filter_status_t fdcan_add_id_to_filter(FDCAN_HandleTypeDef *hfd
     }
     HAL_FDCAN_ConfigFilter(hfdcan, &sFilterConfig);
     HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, fifos);
-#if USE_RTOS
+#if USE_FREERTOS
     xTaskResumeAll();
 #endif
     return fdcan_filter_ok;
@@ -132,14 +132,14 @@ static inline s32 user_fdcan_send(u32 id, u32 id_type, u32 txframtype, u32 lenth
 
 void        user_fdcan_register_callback(fdcan_rx_callback callback);
 
-drv_fdcan_t user_fdcan_t =
-    {
-        .add_id_to_filter = user_fdcan_add_id_to_filter,
-        .start            = user_fdcan_start,
-        .send             = user_fdcan_send,
-        .rx_callback      = user_fdcan_register_callback,
-        .rx_typedef       = {0},
-        .rx_data          = {0}};
+drv_fdcan_t user_fdcan_t = {
+    .add_id_to_filter = user_fdcan_add_id_to_filter,
+    .start            = user_fdcan_start,
+    .send             = user_fdcan_send,
+    .rx_callback      = user_fdcan_register_callback,
+    .rx_typedef       = { 0 },
+    .rx_data          = { 0 }
+};
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {

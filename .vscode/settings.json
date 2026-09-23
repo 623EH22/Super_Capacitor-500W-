@@ -1,15 +1,31 @@
 {
     // 保存时自动用 clang-format 格式化
     "editor.formatOnSave": true,
+    // 整文件格式化，避免“只格式化改动行”导致空行合并后缩进错位、要按两次保存
+    "editor.formatOnSaveMode": "file",
+    // 强制空格缩进，关闭自动探测（避免被 Keil/Tab 文件带偏，出现多两个 tab）
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.detectIndentation": false,
+    "editor.trimAutoWhitespace": true,
     // C/C++ 文件使用 C/C++ 扩展 (ms-vscode.cpptools) 内置的 clang-format
     "[c]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
     },
     "[cpp]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
     },
     "[header]": {
-        "editor.defaultFormatter": "ms-vscode.cpptools"
+        "editor.defaultFormatter": "ms-vscode.cpptools",
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
     },
     // 使用工作区里的 .clang-format 文件（默认即为 "file"，写出来便于确认）
     "C_Cpp.formatting": "clangFormat",

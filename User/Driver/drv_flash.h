@@ -40,11 +40,11 @@
 *                                                     PUBLIC DEFINES
 *************************************************************************************************************************
 */
-#define FLASH_BANK_MEM_SIZE        0x10000U
+#define FLASH_BANK_MEM_SIZE  0x10000U
 
-#define STORAGE_SIZE               (STORAGE_END_ADDR - STORAGE_START_ADDR)
-#define STORAGE_USE_PAGE_NUM       (STORAGE_SIZE / FLASH_PAGE_SIZE)
-#define STORAGE_PAGE_ADDR(x)       (STORAGE_START_ADDR + ((x) * FLASH_PAGE_SIZE))
+#define STORAGE_SIZE         (STORAGE_END_ADDR - STORAGE_START_ADDR)
+#define STORAGE_USE_PAGE_NUM (STORAGE_SIZE / FLASH_PAGE_SIZE)
+#define STORAGE_PAGE_ADDR(x) (STORAGE_START_ADDR + ((x) * FLASH_PAGE_SIZE))
 
 /* Storage page bit mask for selecting specific storage pages */
 #define STORAGE_ERASE_PAGE_MASK(x) (1U << (x))
@@ -54,8 +54,8 @@
 *                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
-typedef void (*DEF_FLASH_WRITE)(uint32_t address, void *data, uint32_t size);
-typedef void (*DEF_FLASH_READ)(uint32_t address, void *data, uint32_t size);
+typedef void (*DEF_FLASH_WRITE)(uint32_t address, void *data, uint32_t length);
+typedef void (*DEF_FLASH_READ)(uint32_t address, void *data, uint32_t length);
 typedef void (*DEF_FLASH_ERASE_PAGE)(uint32_t mask);
 
 typedef struct drv_flash_func_handle_t {
@@ -80,10 +80,9 @@ typedef struct drv_flash_func_handle_t {
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
-
-EXT_DRV_FLASH DRV_FLASH_FUNC_HANDLE_T DrvFlashFuncHdl;
-EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Write(uint32_t address, void *data, uint32_t size);
-EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Read(uint32_t address, void *data, uint32_t size);
-EXT_DRV_FLASH RAM_FUNC void           Drv_Flash_Page_Erase(uint32_t mask);
+EXT_DRV_FLASH RAM_FUNC void                     Drv_Flash_Write(uint32_t address, void *data, uint32_t length);
+EXT_DRV_FLASH RAM_FUNC void                     Drv_Flash_Read(uint32_t address, void *data, uint32_t length);
+EXT_DRV_FLASH RAM_FUNC void                     Drv_Flash_Page_Erase(uint32_t mask);
+EXT_DRV_FLASH RAM_FUNC DRV_FLASH_FUNC_HANDLE_T *DRV_Flash_GetFuncHandle(void);
 
 #endif /* DRV_FLASH_H */

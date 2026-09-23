@@ -21,21 +21,23 @@
 *                                                    PRIVATE DEFINES
 *************************************************************************************************************************
 */
-#define FLASH_BANK1_BASE            0x08000000U
-#define FLASH_BANK2_BASE            0x08010000U
+#define FLASH_BANK1_BASE               0x08000000U
+#define FLASH_BANK2_BASE               0x08010000U
 
-#define STORAGE_BANK                (STORAGE_START_ADDR >= FLASH_BANK2_BASE ? FLASH_BANK_2 : FLASH_BANK_1)
-#define STORAGE_BANK_BASE           (STORAGE_BANK == FLASH_BANK_1 ? FLASH_BANK1_BASE : FLASH_BANK2_BASE)
+#define STORAGE_BANK                   (STORAGE_START_ADDR >= FLASH_BANK2_BASE ? FLASH_BANK_2 : FLASH_BANK_1)
+#define STORAGE_BANK_BASE              (STORAGE_BANK == FLASH_BANK_1 ? FLASH_BANK1_BASE : FLASH_BANK2_BASE)
 
-#define FLASH_BANK_PAGE_AMOUNT      (FLASH_BANK_MEM_SIZE / FLASH_PAGE_SIZE)
-#define STORAGE_PAGE_NUM(x)         ((x) + ((STORAGE_START_ADDR - STORAGE_BANK_BASE) / FLASH_PAGE_SIZE))
+#define FLASH_BANK_PAGE_AMOUNT         (FLASH_BANK_MEM_SIZE / FLASH_PAGE_SIZE)
+#define STORAGE_PAGE_NUM(x)            ((x) + ((STORAGE_START_ADDR - STORAGE_BANK_BASE) / FLASH_PAGE_SIZE))
 
-#define IS_FLASH_ADDRESS(addr)      (((addr) >= FLASH_BASE) && ((addr) < (FLASH_BASE + 2 * FLASH_BANK_MEM_SIZE)))
-#define IS_FLASH_PAGE(page)         (((page) >= 0) && ((page) < FLASH_BANK_PAGE_AMOUNT))
-#define IS_FLASH_WRITE_SIZE(size)   (((size) > 0U) && ((size) + (FLASH_MIN_WRITE_SIZE - 1U) <= FLASH_PAGE_SIZE))
+#define IS_FLASH_ADDRESS(addr)         (((addr) >= FLASH_BASE) && ((addr) < (FLASH_BASE + 2 * FLASH_BANK_MEM_SIZE)))
+#define IS_FLASH_PAGE_NUM(page)        (((page) >= 0) && ((page) < FLASH_BANK_PAGE_AMOUNT))
+#define IS_FLASH_WRITE_SIZE(size)      (((size) > 0U) && ((size) + (FLASH_MIN_WRITE_SIZE - 1U) <= FLASH_PAGE_SIZE))
+#define IS_FLASH_WRITE_ALIGNMENT(addr) (((addr) & (FLASH_MIN_WRITE_SIZE - 1U)) == 0)
 
-#define IS_STORAGE_WRITE_SIZE(size) (((size) > 0U) && ((size) + (FLASH_MIN_WRITE_SIZE - 1U) <= FLASH_PAGE_SIZE))
-#define IS_STORAGE_PAGE_MASK(mask)  (((mask) >> STORAGE_USE_PAGE_NUM) == 0)
+#define IS_STORAGE_ADDRESS(addr)       (((addr) >= STORAGE_START_ADDR) && ((addr) < STORAGE_END_ADDR))
+#define IS_STORAGE_WRITE_SIZE(size)    (((size) > 0U) && ((size) + (FLASH_MIN_WRITE_SIZE - 1U) <= FLASH_PAGE_SIZE))
+#define IS_STORAGE_PAGE_MASK(mask)     (((mask) >> STORAGE_USE_PAGE_NUM) == 0)
 
 /*
 *************************************************************************************************************************
@@ -92,6 +94,7 @@ RAM_FUNC static uint32_t Flash_Wait(void)
 RAM_FUNC static void Flash_Program(uint32_t address, void *data, uint32_t size)
 {
     assert(IS_FLASH_ADDRESS(address));
+    assert(IS_FLASH_WRITE_ALIGNMENT(address));
     assert(data != NULL);
     assert(IS_FLASH_WRITE_SIZE(size));
 
@@ -140,7 +143,7 @@ RAM_FUNC static void Flash_Program(uint32_t address, void *data, uint32_t size)
 /* RM0440 page erase: PER + PNB + BKER + STRT, then wait BSY */
 RAM_FUNC static void Flash_Page_Erase(uint32_t page, uint32_t bank)
 {
-    assert(IS_FLASH_PAGE(page));
+    assert(IS_FLASH_PAGE_NUM(page));
     uint32_t timeout = 0x800000U;
     uint8_t  icache_on;
     uint8_t  dcache_on;
@@ -199,15 +202,16 @@ RAM_FUNC static void Flash_Page_Erase(uint32_t page, uint32_t bank)
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
-RAM_FUNC void Drv_Flash_Write(uint32_t address, void *data, uint32_t size)
+RAM_FUNC void Drv_Flash_Write(uint32_t address, void *data, uint32_t length)
 {
     assert(IS_STORAGE_ADDRESS(address));
-    assert(IS_STORAGE_WRITE_SIZE(size));
+    assert(IS_STORAGE_WRITE_SIZE(length));
     assert(data != NULL);
 
+#if FLASH_REPROGRAM_EN
     uint32_t addr       = address & ~(FLASH_MIN_WRITE_SIZE - 1);
     uint8_t  addr_off   = address & (FLASH_MIN_WRITE_SIZE - 1);
-    uint32_t write_size = (addr_off + size + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
+    uint32_t write_size = (addr_off + length + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
     uint8_t  bytes[write_size];
 
     uint16_t i;
@@ -215,13 +219,19 @@ RAM_FUNC void Drv_Flash_Write(uint32_t address, void *data, uint32_t size)
         bytes[i] = 0xFF;
     }
 
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < length; i++) {
         bytes[addr_off + i] = ((uint8_t *)data)[i];
     }
 
-    for (i = addr_off + size; i < write_size; i++) {
+    for (i = addr_off + length; i < write_size; i++) {
         bytes[i] = 0xFF;
     }
+#else
+    uint32_t addr         = (address + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
+    uint32_t align_length = address & (FLASH_MIN_WRITE_SIZE - 1);
+    uint32_t write_size   = length;
+    uint8_t *bytes        = (uint8_t *)data;
+#endif
 
     Flash_Unlock();
 
@@ -230,12 +240,12 @@ RAM_FUNC void Drv_Flash_Write(uint32_t address, void *data, uint32_t size)
     Flash_Lock();
 }
 
-RAM_FUNC void Drv_Flash_Read(uint32_t address, void *data, uint32_t size)
+RAM_FUNC void Drv_Flash_Read(uint32_t address, void *data, uint32_t length)
 {
     assert(IS_STORAGE_ADDRESS(address));
     assert(data != NULL);
 
-    uint32_t readNum = size;
+    uint32_t readNum = length;
     uint8_t *pdata   = data;
     for (uint32_t i = 0; i < readNum; i++) {
         *(uint8_t *)(pdata + i) = *((uint8_t *)(address + i));
@@ -256,4 +266,9 @@ RAM_FUNC void Drv_Flash_Page_Erase(uint32_t mask)
     }
 
     Flash_Lock();
+}
+
+DRV_FLASH_FUNC_HANDLE_T *DRV_Flash_GetFuncHandle(void)
+{
+    return &DrvFlashFuncHdl;
 }

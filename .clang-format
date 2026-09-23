@@ -48,7 +48,7 @@ DerivePointerAlignment: false
 FixNamespaceComments: true
 IndentCaseLabels: true
 IndentPPDirectives: None
-IndentWidth:
+IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false
 MaxEmptyLinesToKeep: 1
@@ -72,7 +72,6 @@ SpacesInSquareBrackets: false
 Standard: Cpp11
 TabWidth: 4
 UseTab: Never
-AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignConsecutiveMacros: AcrossEmptyLines
 AlignConsecutiveBitFields: AcrossEmptyLines
 AlignArrayOfStructures: Right
-w'w'w'w'w

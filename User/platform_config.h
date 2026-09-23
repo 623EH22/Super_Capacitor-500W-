@@ -30,7 +30,7 @@
 *                                                   MCU CONFIGURATION
 *************************************************************************************************************************
 */
-#define RAM_FUNC             __attribute__((section(".RamFunc"), noinline))
+#define RAM_FUNC __attribute__((section(".RamFunc"), noinline))
 /*
 *************************************************************************************************************************
 *                                                  CLOCK CONFIGURATION
@@ -42,6 +42,7 @@
 *                                                  FLASH CONFIGURATION
 *************************************************************************************************************************
 */
+#define FLASH_REPROGRAM_EN   0
 #define FLASH_MIN_WRITE_SIZE 8U
 #define FLASH_PAGE_SIZE      0x800U
 #define STORAGE_START_ADDR   0x0801E000U
@@ -93,5 +94,6 @@
 *                                                FREERTOS CONFIGURATION
 *************************************************************************************************************************
 */
+#define USE_FREERTOS 1
 
 #endif
