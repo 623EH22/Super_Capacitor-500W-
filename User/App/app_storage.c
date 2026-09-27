@@ -1,70 +1,35 @@
 /*
 *************************************************************************************************************************
-*                                                       DRV_FLASH
-*                            Driver module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : drv_flash.h
-* Version       : V1.01.00
+*                                                      APP_STORAGE
+*                      Application layer module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : app_storage.c
+* Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
 * Note(s)       : TBD
-*************************************************************************************************************************
 *                                                  MODIFICATION HISTORY
 *************************************************************************************************************************
 *   Version   Date          Author        Description
-*   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*   V1.01.00  2026-09-28    RuiYuan Lin   写/擦接口返回状态码
-*/
-#ifndef DRV_FLASH_H
-#define DRV_FLASH_H
-
-/*
+*   V1.00.00  2026-09-16    RuiYuan Lin   Initial release
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#include "platform_config.h"
-
+#define DEF_APP_STORAGE
+#include "app_storage.h"
+#include "task_scheduler.h"
 /*
 *************************************************************************************************************************
-*                                                     EXTERN DEFINES
+*                                                    PRIVATE DEFINES
 *************************************************************************************************************************
 */
 
-#ifdef DEF_DRV_FLASH
-#define EXT_DRV_FLASH
-#else
-#define EXT_DRV_FLASH extern
-#endif
-
 /*
 *************************************************************************************************************************
-*                                                     PUBLIC DEFINES
+*                                                     PRIVATE TYPES
 *************************************************************************************************************************
 */
-#define STORAGE_SIZE         (STORAGE_END_ADDR - STORAGE_START_ADDR)
-#define STORAGE_USE_PAGE_NUM (STORAGE_SIZE / FLASH_PAGE_SIZE)
-#define STORAGE_PAGE_ADDR(x) (STORAGE_START_ADDR + ((x) * FLASH_PAGE_SIZE))
 
-/* Storage page bit mask for selecting specific storage page s */
-#define STORAGE_ERASE_PAGE_MASK(x) (1U << (x))
-
-#define DRV_FLASH_OK               0x00000000U
-#define DRV_FLASH_ERR_VERIFY       0x80000000U
-
-/*
-*************************************************************************************************************************
-*                                                      PUBLIC TYPES
-*************************************************************************************************************************
-*/
-typedef uint32_t (*DEF_FLASH_WRITE)(uint32_t address, void *data, uint32_t length);
-typedef void (*DEF_FLASH_READ)(uint32_t address, void *data, uint32_t length);
-typedef uint32_t (*DEF_FLASH_ERASE_PAGE)(uint32_t mask);
-
-typedef struct drv_flash_func_handle_t {
-    DEF_FLASH_WRITE      flash_write;
-    DEF_FLASH_READ       flash_read;
-    DEF_FLASH_ERASE_PAGE flash_page_erase;
-} DRV_FLASH_FUNC_HANDLE_T;
 /*
 *************************************************************************************************************************
 *                                                   PRIVATE VARIABLES
@@ -79,12 +44,29 @@ typedef struct drv_flash_func_handle_t {
 
 /*
 *************************************************************************************************************************
+*                                               PRIVATE (HELPER) FUNCTIONS
+*************************************************************************************************************************
+*/
+void App_Storage_Register(void)
+{
+    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
+
+    ptr->register_func(SP_CAP_CURR_ERR_OFFSET, &storage_test, sizeof(storage_test));
+}
+/*
+*************************************************************************************************************************
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
-EXT_DRV_FLASH RAM_FUNC uint32_t                 Drv_Flash_Write(uint32_t address, void *data, uint32_t length);
-EXT_DRV_FLASH RAM_FUNC void                     Drv_Flash_Read(uint32_t address, void *data, uint32_t length);
-EXT_DRV_FLASH RAM_FUNC uint32_t                 Drv_Flash_Page_Erase(uint32_t mask);
-EXT_DRV_FLASH RAM_FUNC DRV_FLASH_FUNC_HANDLE_T *DRV_Flash_GetFuncHandle(void);
+HAL_STORAGE_FUNC_INFO_HANDLE_T *App_Storage_GetHandle(void)
+{
+    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
+    return ptr;
+}
 
-#endif /* DRV_FLASH_H */
+void App_Storage_Init(void)
+{
+    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
+    App_Storage_Register();
+    ptr->init_func();
+}

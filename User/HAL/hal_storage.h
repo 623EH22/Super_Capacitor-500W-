@@ -46,7 +46,15 @@
 *                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
+typedef void (*storage_register)(uint16_t id, void *data, uint8_t length);
+typedef void (*storage_init)(void);
+typedef void (*storage_para_updt)(uint16_t id, void *data, uint8_t length);
 
+typedef struct {
+    storage_register  register_func;
+    storage_init      init_func;
+    storage_para_updt para_updt_func;
+} HAL_STORAGE_FUNC_INFO_HANDLE_T;
 /*
 *************************************************************************************************************************
 *                                                   PRIVATE VARIABLES
@@ -76,7 +84,10 @@ typedef enum hal_storage_status_e {
 *************************************************************************************************************************
 */
 
-EXT_HAL_STORAGE void Hal_StorageRegister(uint16_t id, void *data, uint8_t length, void *callback);
-EXT_HAL_STORAGE void Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length);
+EXT_HAL_STORAGE void                           Hal_Storage_Register(uint16_t id, void *data, uint8_t length);
+EXT_HAL_STORAGE void                           Hal_Storage_Init(void);
+EXT_HAL_STORAGE void                           Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length);
+
+EXT_HAL_STORAGE HAL_STORAGE_FUNC_INFO_HANDLE_T hal_storage_func_info;
 
 #endif /* HAL_STORAGE_H */

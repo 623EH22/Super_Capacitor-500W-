@@ -23,6 +23,7 @@
 #define DEF_HAL_STORAGE
 #include "hal_storage.h"
 #include "drv_flash.h"
+#include "stm32g4xx_hal.h"
 #include <stddef.h>
 #include "string.h"
 
@@ -74,6 +75,7 @@ typedef struct {
     uint8_t              page;
     uint8_t              item_count;
     uint32_t             current;
+    uint32_t             seq;
 } HAL_STORAGE_INFO_HANDLE_T;
 
 /*
@@ -81,19 +83,24 @@ typedef struct {
 *                                                   PRIVATE VARIABLES
 *************************************************************************************************************************
 */
-static HAL_STORAGE_INFO_HANDLE_T storage_page_info;
+HAL_STORAGE_INFO_HANDLE_T storage_page_info;
+
 /*
 *************************************************************************************************************************
 *                                                    PUBLIC VARIABLES
 *************************************************************************************************************************
 */
-
+HAL_STORAGE_FUNC_INFO_HANDLE_T hal_storage_func_info = {
+    .register_func  = Hal_Storage_Register,
+    .init_func      = Hal_Storage_Init,
+    .para_updt_func = Hal_Storage_ParaUpdt,
+};
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS
 *************************************************************************************************************************
 */
-uint16_t CRC16_Modbus(const uint8_t *data, uint32_t length)
+uint32_t CRC16_Modbus(const uint8_t *data, uint32_t length)
 {
     uint16_t crc = 0xFFFFU;
 
@@ -141,7 +148,7 @@ static void Hal_Storage_PageInit(uint32_t page, uint32_t seq)
     header.status = DEF_STORAGE_PAGE_ACTIVE;
     header.seq    = seq;
 
-    uint32_t crc  = CRC32_Calculate(&header, sizeof(header) - sizeof(uint32_t));
+    uint32_t crc  = CRC32_Calculate((uint8_t *)&header, sizeof(header) - sizeof(uint32_t));
     header.crc    = crc;
 
     drv_func->flash_write(address, &header, sizeof(header));
@@ -181,7 +188,7 @@ static STORAGE_PAGE_STATUS_E Hal_Storage_FindActivePage(uint32_t *page)
             uint8_t               j = (i - 1) & (STORAGE_USE_PAGE_NUM - 1);
             Hal_Storage_GetPageHeader(j, &last_head);
 
-            uint32_t crc = CRC32_Calculate(&head, sizeof(STORAGE_PAGE_HEADER_T) - 4);
+            uint32_t crc = CRC32_Calculate((uint8_t *)&head, sizeof(STORAGE_PAGE_HEADER_T) - 4);
 
             if (last_head.magic == DEF_STORAGE_PAGE_ERASED && last_head.status == DEF_STORAGE_PAGE_ERASED) {
                 if (crc == head.crc) {
@@ -200,7 +207,7 @@ static STORAGE_PAGE_STATUS_E Hal_Storage_FindActivePage(uint32_t *page)
             } else {
                 fault_page_mask |= 1 << i;
             }
-        } else if (head.magic == 0 && head.status == 0) {
+        } else if (head.magic == DEF_STORAGE_PAGE_FULL && head.status == DEF_STORAGE_PAGE_FULL) {
             if (head.seq != 0 && head.crc != 0) {
                 *page = i;
                 return STORAGE_PAGE_FULL;
@@ -293,49 +300,49 @@ static void Hal_Storage_DataWrite(uint16_t id, void *data, uint8_t length)
 #endif
 }
 
-static uint8_t Hal_Storage_VerifDataValid(HAL_STORAGE_INFO_HANDLE_T *ptr)
-{
-    DRV_FLASH_FUNC_HANDLE_T *drv_func = DRV_Flash_GetFuncHandle();
-    uint8_t                  i;
-    uint8_t                  valid = 0;
-    ptr->current                   = Hal_Storage_GetCurrentAddr(ptr->page);
+// static uint8_t Hal_Storage_VerifDataValid(HAL_STORAGE_INFO_HANDLE_T *ptr)
+// {
+//     DRV_FLASH_FUNC_HANDLE_T *drv_func = DRV_Flash_GetFuncHandle();
+//     uint8_t                  i;
+//     uint8_t                  valid = 0;
+//     ptr->current                   = Hal_Storage_GetCurrentAddr(ptr->page);
 
-    if (ptr->item_count != 0) {
-        for (i = 0; i < ptr->item_count; i++) {
-            uint32_t addr = ptr->current;
+//     if (ptr->item_count != 0) {
+//         for (i = 0; i < ptr->item_count; i++) {
+//             uint32_t addr = ptr->current;
 
-            while (addr >= STORAGE_PAGE_ADDR(ptr->page) + sizeof(STORAGE_PAGE_HEADER_T)) {
-                uint16_t id = *(uint16_t *)addr;
-                if (ptr->storage_item_table[i].id == id) {
-                    uint8_t data_lenth = ptr->storage_item_table[i].length;
-                    /* layout: [id:2][crc:2][data:length] */
-                    uint8_t  crc_src[DEF_STORAGE_ID_LENTH + data_lenth];
-                    uint16_t crc16;
-                    uint16_t crc_flash;
+//             while (addr >= STORAGE_PAGE_ADDR(ptr->page) + sizeof(STORAGE_PAGE_HEADER_T)) {
+//                 uint16_t id = *(uint16_t *)addr;
+//                 if (ptr->storage_item_table[i].id == id) {
+//                     uint8_t data_lenth = ptr->storage_item_table[i].length;
+//                     /* layout: [id:2][crc:2][data:length] */
+//                     uint8_t  crc_src[DEF_STORAGE_ID_LENTH + data_lenth];
+//                     uint16_t crc16;
+//                     uint16_t crc_flash;
 
-                    drv_func->flash_read(addr, crc_src, DEF_STORAGE_ID_LENTH);
-                    drv_func->flash_read(addr + DEF_STORAGE_ID_LENTH + 2U, &crc_src[DEF_STORAGE_ID_LENTH], data_lenth);
-                    crc16 = CRC16_Modbus(crc_src, DEF_STORAGE_ID_LENTH + data_lenth);
-                    drv_func->flash_read(addr + DEF_STORAGE_ID_LENTH, &crc_flash, 2U);
+//                     drv_func->flash_read(addr, crc_src, DEF_STORAGE_ID_LENTH);
+//                     drv_func->flash_read(addr + DEF_STORAGE_ID_LENTH + 2U, &crc_src[DEF_STORAGE_ID_LENTH], data_lenth);
+//                     crc16 = CRC16_Modbus(crc_src, DEF_STORAGE_ID_LENTH + data_lenth);
+//                     drv_func->flash_read(addr + DEF_STORAGE_ID_LENTH, &crc_flash, 2U);
 
-                    if (crc16 == crc_flash) {
-                        valid++;
-                        break;
-                    }
-                }
-                addr -= 4;
-            }
-            if ((i == ptr->item_count - 1) && (valid == 0)) {
-                valid = 0xFF;
-                break;
-            }
-        }
-    } else {
-        valid = 0xFF;
-    }
+//                     if (crc16 == crc_flash) {
+//                         valid++;
+//                         break;
+//                     }
+//                 }
+//                 addr -= 4;
+//             }
+//             if ((i == ptr->item_count - 1) && (valid == 0)) {
+//                 valid = 0xFF;
+//                 break;
+//             }
+//         }
+//     } else {
+//         valid = 0xFF;
+//     }
 
-    return valid;
-}
+//     return valid;
+// }
 
 static void Hal_Storage_PageTransfer(HAL_STORAGE_INFO_HANDLE_T *ptr)
 {
@@ -358,6 +365,8 @@ static void Hal_Storage_PageTransfer(HAL_STORAGE_INFO_HANDLE_T *ptr)
 
     Hal_Storage_PageInit(next_page, seq + 1);
 
+    ptr->seq     = seq + 1;
+
     ptr->current = STORAGE_PAGE_ADDR(next_page) + sizeof(STORAGE_PAGE_HEADER_T);
 
     for (uint8_t i = 0; i < ptr->item_count; i++) {
@@ -374,6 +383,8 @@ static void Hal_Storage_DataRecoverFromFlash(HAL_STORAGE_INFO_HANDLE_T *ptr)
     DRV_FLASH_FUNC_HANDLE_T *drv_func = DRV_Flash_GetFuncHandle();
 
     uint8_t                  i;
+
+    ptr->seq = *((uint32_t *)(STORAGE_PAGE_ADDR(ptr->page) + 8));
 
     for (i = 0; i < ptr->item_count; i++) {
         uint32_t addr = ptr->current;
@@ -399,7 +410,7 @@ static void Hal_Storage_DataRecoverFromFlash(HAL_STORAGE_INFO_HANDLE_T *ptr)
                     break;
                 }
             }
-            addr -= 4;
+            addr -= 8;
         }
     }
 }
@@ -417,7 +428,7 @@ static void Hal_Storage_ErrorHandler(HAL_STORAGE_INFO_HANDLE_T *ptr)
 *                                               GLOBAL FUNCTION PROTOTYPES
 *************************************************************************************************************************
 */
-void Hal_StorageRegister(uint16_t id, void *data, uint8_t length)
+void Hal_Storage_Register(uint16_t id, void *data, uint8_t length)
 {
     HAL_STORAGE_INFO_HANDLE_T *ptr = &storage_page_info;
 
@@ -443,38 +454,6 @@ void Hal_StorageRegister(uint16_t id, void *data, uint8_t length)
     ptr->storage_item_table[ptr->item_count].length = length;
 
     ptr->item_count++;
-}
-
-void Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length)
-{
-    HAL_STORAGE_INFO_HANDLE_T *ptr = &storage_page_info;
-
-#if FLASH_REPROGRAM_EN
-    uint16_t align_length = (DEF_STORAGE_ID_LENTH + length + 2 + 3) & ~3;
-
-#else
-    ptr->current          = (ptr->current + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
-
-    uint16_t align_length = (DEF_STORAGE_ID_LENTH + length + 2 + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
-#endif
-
-    // /* Check if the storage item is registered */
-    // uint8_t i;
-    // for (i = 0; i < ptr->item_count; i++) {
-    //     if (ptr->storage_item_table[i].id == id) {
-    //         break;
-    //     }
-    // }
-    // if (i == ptr->item_count) {
-    //     return;
-    // }
-
-    /* Calculate the aligned length for the storage item */
-    if ((ptr->current + align_length) <= STORAGE_PAGE_ADDR(ptr->page) + FLASH_PAGE_SIZE) {
-        Hal_Storage_DataWrite(id, data, length);
-    } else {
-        Hal_Storage_PageTransfer(ptr);
-    }
 }
 
 void Hal_Storage_Init(void)
@@ -526,5 +505,38 @@ void Hal_Storage_Init(void)
             break;
         default:
             break;
+    }
+}
+
+void Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length)
+{
+    HAL_STORAGE_INFO_HANDLE_T *ptr = &storage_page_info;
+
+#if FLASH_REPROGRAM_EN
+    uint16_t align_length = (DEF_STORAGE_ID_LENTH + length + 2 + 3) & ~3;
+
+#else
+    ptr->current          = (ptr->current + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
+
+    uint16_t align_length = (DEF_STORAGE_ID_LENTH + length + 2 + FLASH_MIN_WRITE_SIZE - 1) & ~(FLASH_MIN_WRITE_SIZE - 1);
+#endif
+
+    // /* Check if the storage item is registered */
+    // uint8_t i;
+    // for (i = 0; i < ptr->item_count; i++) {
+    //     if (ptr->storage_item_table[i].id == id) {
+    //         break;
+    //     }
+    // }
+    // if (i == ptr->item_count) {
+    //     return;
+    // }
+
+    /* Calculate the aligned length for the storage item */
+    if ((ptr->current + align_length) <= STORAGE_PAGE_ADDR(ptr->page) + FLASH_PAGE_SIZE) {
+        Hal_Storage_DataWrite(id, data, length);
+    } else {
+        Hal_Storage_PageTransfer(ptr);
+        Hal_Storage_DataWrite(id, data, length);
     }
 }

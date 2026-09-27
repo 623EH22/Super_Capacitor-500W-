@@ -1265,6 +1265,16 @@
               <FileType>5</FileType>
               <FilePath>..\User\App\task_scheduler.h</FilePath>
             </File>
+            <File>
+              <FileName>app_storage.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\App\app_storage.c</FilePath>
+            </File>
+            <File>
+              <FileName>app_storage.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\App\app_storage.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

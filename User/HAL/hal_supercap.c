@@ -33,34 +33,34 @@
 */
 
 #define MEASURE
-#define CHARGE_EFFICIENCY      0.90f
-#define DISCHARGE_EFFICIENCY   1.005f
-#define CUR_KP                 350.0f
-#define CUR_KI                 12.0f
-#define CUR_KD                 0.0f
-#define MAX_INPUT_VOLTAGE      28.0f
-#define MIN_INPUT_VOLTAGE      19.0f
-#define MAX_CAP_VOL            15.20f
-#define MIN_CAP_VOL            2.0f
-#define CAP_CURR_DEADZONE      0.2f
-#define CAP_VOL_DEADZONE       0.2f
-#define MAX_COMPARE            53760
-#define INPUT_VOLTAGE          24.0f
-#define MAX_DUTY               MAX_COMPARE *MAX_CAP_VOL / INPUT_VOLTAGE
-#define MIN_DUTY               MAX_COMPARE *MIN_CAP_VOL / INPUT_VOLTAGE
-#define POWER_RING_REPEAT      10
-#define VOL_RING_REPEAT        5
-#define RETAINED_POWER         5.0f
-#define CAP_VOLTAGE_FACTOR     10.0f
-#define INP_VOLTAGE_FACTOR     10.0f
-#define OUT_CURR_FACTOR        100.0f
-#define INP_CURR_FACTOR        100.0f
-#define CAP_CURR_FACTOR        100.0f
-#define CAP_VOLTAGE_OFFSET     0.0f
-#define INP_VOLTAGE_OFFSET     0.0f
-#define OUT_CURR_OFFSET        1.65f
-#define INP_CURR_OFFSET        1.65f
-#define CAP_CURR_OFFSET        1.65f
+#define CHARGE_EFFICIENCY    0.90f
+#define DISCHARGE_EFFICIENCY 1.005f
+#define CUR_KP               350.0f
+#define CUR_KI               12.0f
+#define CUR_KD               0.0f
+#define MAX_INPUT_VOLTAGE    28.0f
+#define MIN_INPUT_VOLTAGE    19.0f
+#define MAX_CAP_VOL          15.20f
+#define MIN_CAP_VOL          2.0f
+#define CAP_CURR_DEADZONE    0.2f
+#define CAP_VOL_DEADZONE     0.2f
+#define MAX_COMPARE          53760
+#define INPUT_VOLTAGE        24.0f
+#define MAX_DUTY             MAX_COMPARE *MAX_CAP_VOL / INPUT_VOLTAGE
+#define MIN_DUTY             MAX_COMPARE *MIN_CAP_VOL / INPUT_VOLTAGE
+#define POWER_RING_REPEAT    10
+#define VOL_RING_REPEAT      5
+#define RETAINED_POWER       5.0f
+#define CAP_VOLTAGE_FACTOR   10.0f
+#define INP_VOLTAGE_FACTOR   10.0f
+#define OUT_CURR_FACTOR      100.0f
+#define INP_CURR_FACTOR      100.0f
+#define CAP_CURR_FACTOR      100.0f
+#define CAP_VOLTAGE_OFFSET   0.0f
+#define INP_VOLTAGE_OFFSET   0.0f
+#define OUT_CURR_OFFSET      1.65f
+#define INP_CURR_OFFSET      1.65f
+#define CAP_CURR_OFFSET      1.65f
 /*需要修改的参数*/
 #define CAP_VOLTAGE_ERR_COEFF  1.0028f
 #define INP_VOLTAGE_ERR_COEFF  0.9950f
@@ -105,7 +105,6 @@ volatile uint32_t  run_freq;
 volatile uint32_t  last_run_freq;
 volatile uint32_t  run_freq_diff;
 u16                shutdown = 0;
-
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS

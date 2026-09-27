@@ -30,6 +30,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "system_init.h"
+#include "app_storage.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,6 +105,7 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   system_init(); //初始化系统，包括串口、超级电容控制等
+	App_Storage_Init();
   /* USER CODE END 2 */
 
   /* Init scheduler */

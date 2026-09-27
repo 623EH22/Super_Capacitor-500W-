@@ -34,6 +34,7 @@
                 "${workspaceFolder}/User/App",
                 "${workspaceFolder}/User/Business",
                 "${workspaceFolder}/User/Driver",
+                "${workspaceFolder}/User/HAL",
                 "${workspaceFolder}/MDK-ARM/RTE/_Super_Capacitor_500W_"
             ],
             "browse": {

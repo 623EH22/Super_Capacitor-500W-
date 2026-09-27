@@ -22,7 +22,7 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-
+#include "stdint.h"
 /*
 *************************************************************************************************************************
 *                                                     EXTERN DEFINES
@@ -71,6 +71,7 @@
 *************************************************************************************************************************
 */
 
-EXT_TASK_SCHEDULER void configureTimerForRunTimeStats(void);
+EXT_TASK_SCHEDULER void     configureTimerForRunTimeStats(void);
+EXT_TASK_SCHEDULER uint32_t storage_test;
 
 #endif /* TASK_SCHEDULER_H */
