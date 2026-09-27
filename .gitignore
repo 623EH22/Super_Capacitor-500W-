@@ -7,3 +7,8 @@ MDK-ARM/Super_Capacitor(500W)/
 *.bak
 *.tmp
 MDK-ARM/build_log.txt
+
+# 本地笔记，不上传
+FEE.md
+drv_flash_vs_rm0440.md
+嵌入式C注释模板.md
