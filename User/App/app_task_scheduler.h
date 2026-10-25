@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                     TASK_SCHEDULER
+*                                                     APP_TASK_SCHEDULER
 *                      Application layer module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : task_scheduler.h
+* Filename      : app_task_scheduler.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -14,8 +14,8 @@
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
 *************************************************************************************************************************
 */
-#ifndef TASK_SCHEDULER_H
-#define TASK_SCHEDULER_H
+#ifndef APP_TASK_SCHEDULER_H
+#define APP_TASK_SCHEDULER_H
 
 /*
 *************************************************************************************************************************
@@ -29,10 +29,10 @@
 *************************************************************************************************************************
 */
 
-#ifdef DEF_TASK_SCHEDULER
-#define EXT_TASK_SCHEDULER
+#ifdef DEF_APP_TASK_SCHEDULER
+#define EXT_APP_TASK_SCHEDULER
 #else
-#define EXT_TASK_SCHEDULER extern
+#define EXT_APP_TASK_SCHEDULER extern
 #endif
 
 /*
@@ -71,7 +71,7 @@
 *************************************************************************************************************************
 */
 
-EXT_TASK_SCHEDULER void     configureTimerForRunTimeStats(void);
-EXT_TASK_SCHEDULER uint32_t storage_test;
+EXT_APP_TASK_SCHEDULER void     configureTimerForRunTimeStats(void);
+EXT_APP_TASK_SCHEDULER uint32_t storage_test;
 
-#endif /* TASK_SCHEDULER_H */
+#endif /* APP_TASK_SCHEDULER_H */

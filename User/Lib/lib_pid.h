@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
 *                                                          PID
-*                          Algorithm module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : PID.h
+*                          Lib module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : lib_pid.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -14,8 +14,8 @@
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
 */
 
-#ifndef PID_H
-#define PID_H
+#ifndef LIB_PID_H
+#define LIB_PID_H
 
 
 /*
@@ -35,10 +35,10 @@
 *************************************************************************************************************************
 */
 
-#ifdef DEF_PID
-#define EXT_PID
+#ifdef DEF_LIB_PID
+#define EXT_LIB_PID
 #else
-#define EXT_PID extern
+#define EXT_LIB_PID extern
 #endif
 
 /*
@@ -54,19 +54,19 @@
 */
 
 typedef enum {
-    Pos_Pid, /*位置式PID*/
-    Inc_Pid  /*增量式PID*/
-} Pid_Mode;
+    Lib_Pos_Pid, /*位置式PID*/
+    Lib_Inc_Pid  /*增量式PID*/
+} Lib_Pid_Mode;
 
 typedef struct
 {
-    Pid_Mode       Mode;
+    Lib_Pid_Mode       Mode;
     float          Kp, Ki, Kd;
     float          Max_Out, Max_Iout, Min_Out, Min_Iout;
     volatile float Exp, Real;
     volatile float Pout, Iout, Dout, Tout;
     volatile float Err[3];
-} Pid_t;
+} Lib_Pid_t;
 
 /*
 *************************************************************************************************************************
@@ -92,8 +92,8 @@ typedef struct
 *************************************************************************************************************************
 */
 
-EXT_PID bool  PID_Handle_Init(Pid_t *pid, const float Kpid[7], const Pid_Mode Mode);
-EXT_PID float PID_Calculate(Pid_t *pid, const float real, const float exp);
-EXT_PID bool  PID_Refresh(Pid_t *pid);
+EXT_LIB_PID bool  Lib_Pid_Handle_Init(Lib_Pid_t *pid, const float Kpid[7], const Lib_Pid_Mode Mode);
+EXT_LIB_PID float Lib_Pid_Calculate(Lib_Pid_t *pid, const float real, const float exp);
+EXT_LIB_PID bool  Lib_Pid_Refresh(Lib_Pid_t *pid);
 
 #endif

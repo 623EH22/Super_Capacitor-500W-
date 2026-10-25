@@ -84,10 +84,10 @@ typedef enum hal_storage_status_e {
 *************************************************************************************************************************
 */
 
-EXT_HAL_STORAGE void                           Hal_Storage_Register(uint16_t id, void *data, uint8_t length);
-EXT_HAL_STORAGE void                           Hal_Storage_Init(void);
-EXT_HAL_STORAGE void                           Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length);
+EXT_HAL_STORAGE void                            Hal_Storage_Register(uint16_t id, void *data, uint8_t length);
+EXT_HAL_STORAGE void                            Hal_Storage_Init(void);
+EXT_HAL_STORAGE void                            Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length);
 
-EXT_HAL_STORAGE HAL_STORAGE_FUNC_INFO_HANDLE_T hal_storage_func_info;
+EXT_HAL_STORAGE HAL_STORAGE_FUNC_INFO_HANDLE_T *Hal_Storage_GetFuncHandle(void);
 
 #endif /* HAL_STORAGE_H */

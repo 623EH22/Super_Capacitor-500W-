@@ -54,7 +54,7 @@ typedef struct
     void (*deinit)(void);
     void (*start)(void);
     void (*stop)(void);
-    void (*set_compare)(u16 compare);
+    void (*set_compare)(uint16_t compare);
 } hrtim_t;
 
 /*

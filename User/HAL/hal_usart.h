@@ -50,9 +50,9 @@
 
 typedef struct
 {
-    u8    print_ready;  // 打印准备就绪标志
+    uint8_t    print_ready;  // 打印准备就绪标志
     float float_data;
-    u16   uint16_data;
+    uint16_t   uint16_data;
 } uart_data_t;
 
 /*
@@ -79,8 +79,8 @@ typedef struct
 *************************************************************************************************************************
 */
 
-EXT_HAL_USART s32  hal_usart_init(void);
-EXT_HAL_USART void hal_uart_data_process(char *pdata, u16 size);
+EXT_HAL_USART int32_t  hal_usart_init(void);
+EXT_HAL_USART void hal_uart_data_process(char *pdata, uint16_t size);
 EXT_HAL_USART void hal_printf_data(void);
 
 #endif /* HAL_USART_H */

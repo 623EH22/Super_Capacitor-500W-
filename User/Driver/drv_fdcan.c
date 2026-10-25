@@ -44,7 +44,7 @@
 *************************************************************************************************************************
 */
 
-static volatile u8       filter_cursor = 0;
+static volatile uint8_t       filter_cursor = 0;
 static fdcan_rx_callback user_fdcan_rx = NULL;
 
 /*
@@ -59,23 +59,23 @@ static fdcan_rx_callback user_fdcan_rx = NULL;
 *************************************************************************************************************************
 */
 
-static inline s32                       user_fdcan_start(void);
-static inline drv_fdcan_filter_status_t user_fdcan_add_id_to_filter(u32 id_type, u32 filter_type, u32 id1, u32 id2, u32 fifos);
-static inline s32                       user_fdcan_send(u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata);
+static inline int32_t                       user_fdcan_start(void);
+static inline drv_fdcan_filter_status_t user_fdcan_add_id_to_filter(uint32_t id_type, uint32_t filter_type, uint32_t id1, uint32_t id2, uint32_t fifos);
+static inline int32_t                       user_fdcan_send(uint32_t id, uint32_t id_type, uint32_t txframtype, uint32_t lenth, uint8_t *pdata);
 
-static inline s32                       user_fdcan_start(void)
+static inline int32_t                       user_fdcan_start(void)
 {
     return HAL_FDCAN_Start(&USER_FDCAN);
 }
 
-static drv_fdcan_filter_status_t fdcan_add_id_to_filter(FDCAN_HandleTypeDef *hfdcan, u32 id_type, u32 filter_type, u32 id1, u32 id2, u32 fifos)
+static drv_fdcan_filter_status_t fdcan_add_id_to_filter(FDCAN_HandleTypeDef *hfdcan, uint32_t id_type, uint32_t filter_type, uint32_t id1, uint32_t id2, uint32_t fifos)
 {
 #if USE_FREERTOS
     vTaskSuspendAll();
 #endif
     FDCAN_FilterTypeDef sFilterConfig;
 
-    u32                 max_id_num = id_type == FDCAN_STANDARD_ID ? 0x7FF : 0x1FFFFFFF;
+    uint32_t                 max_id_num = id_type == FDCAN_STANDARD_ID ? 0x7FF : 0x1FFFFFFF;
 
     if ((id1 >= 0 && id1 <= max_id_num) || (id2 >= 0 && id2 <= max_id_num) || filter_cursor <= MAX_FILTER_NUM) {
         sFilterConfig.FilterIndex  = filter_cursor;
@@ -98,12 +98,12 @@ static drv_fdcan_filter_status_t fdcan_add_id_to_filter(FDCAN_HandleTypeDef *hfd
     return fdcan_filter_ok;
 }
 
-static inline drv_fdcan_filter_status_t user_fdcan_add_id_to_filter(u32 id_type, u32 filter_type, u32 id1, u32 id2, u32 fifos)
+static inline drv_fdcan_filter_status_t user_fdcan_add_id_to_filter(uint32_t id_type, uint32_t filter_type, uint32_t id1, uint32_t id2, uint32_t fifos)
 {
     return fdcan_add_id_to_filter(&USER_FDCAN, id_type, filter_type, id1, id2, fifos);
 }
 
-static inline s32 hal_fdcan_send(FDCAN_HandleTypeDef *hfdcan, u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata)
+static inline int32_t hal_fdcan_send(FDCAN_HandleTypeDef *hfdcan, uint32_t id, uint32_t id_type, uint32_t txframtype, uint32_t lenth, uint8_t *pdata)
 {
     FDCAN_TxHeaderTypeDef sTxHeader;
     sTxHeader.Identifier          = id;
@@ -119,7 +119,7 @@ static inline s32 hal_fdcan_send(FDCAN_HandleTypeDef *hfdcan, u32 id, u32 id_typ
     return HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &sTxHeader, pdata);
 }
 
-static inline s32 user_fdcan_send(u32 id, u32 id_type, u32 txframtype, u32 lenth, u8 *pdata)
+static inline int32_t user_fdcan_send(uint32_t id, uint32_t id_type, uint32_t txframtype, uint32_t lenth, uint8_t *pdata)
 {
     return hal_fdcan_send(&USER_FDCAN, id, id_type, txframtype, lenth, pdata);
 }

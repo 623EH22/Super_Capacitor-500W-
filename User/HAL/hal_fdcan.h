@@ -74,7 +74,7 @@
 *************************************************************************************************************************
 */
 
-EXT_HAL_FDCAN s32 hal_fdcan_init(void);
-EXT_HAL_FDCAN s32 hal_supercap_send_can_msg(void);
+EXT_HAL_FDCAN int32_t hal_fdcan_init(void);
+EXT_HAL_FDCAN int32_t hal_supercap_send_can_msg(void);
 
 #endif /* HAL_FDCAN_H */

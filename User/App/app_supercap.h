@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                      SYSTEM_INIT
-*                      Application layer module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : system_init.h
+*                                                       APP_SUPERCAP
+*                             Application module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : app_supercap.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -12,16 +12,20 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*************************************************************************************************************************
+*   V1.00.01  2026-09-28    RuiYuan Lin   HAL_SUPERCAP → APP_SUPERCAP
 */
-#ifndef SYSTEM_INIT_H
-#define SYSTEM_INIT_H
+
+#ifndef APP_SUPERCAP_H
+#define APP_SUPERCAP_H
 
 /*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
+#include "config.h"
+#include "stdbool.h"
+#include "hal_sensor.h"
 
 /*
 *************************************************************************************************************************
@@ -29,10 +33,10 @@
 *************************************************************************************************************************
 */
 
-#ifdef DEF_SYSTEM_INIT
-#define EXT_SYSTEM_INIT
+#ifdef DEF_APP_SUPERCAP
+#define EXT_APP_SUPERCAP
 #else
-#define EXT_SYSTEM_INIT extern
+#define EXT_APP_SUPERCAP extern
 #endif
 
 /*
@@ -41,11 +45,27 @@
 *************************************************************************************************************************
 */
 
+#define MAX_POWER          100.0f
+#define MAX_CHARGE_CURR    40.0f
+#define MAX_DISCHARGE_CURR -45.0f
+#if USE_BMS_CMD
+#define MAX_DISCHARGE_POWER -450.0f
+#endif
+#define MAX_CHARGE_POWER MAX_POWER - 5.0f
+
 /*
 *************************************************************************************************************************
 *                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
+typedef struct
+{
+    HAL_SENSOR_ELE_HANDLE_T ele;
+    volatile float          iref;
+    volatile uint8_t        tick;
+    volatile uint16_t       pwm_val;
+    volatile bool           OpenPwmFlag;
+} app_supercap_handle_t;
 
 /*
 *************************************************************************************************************************
@@ -59,6 +79,8 @@
 *************************************************************************************************************************
 */
 
+EXT_APP_SUPERCAP app_supercap_handle_t supcap;
+
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS
@@ -71,6 +93,6 @@
 *************************************************************************************************************************
 */
 
-EXT_SYSTEM_INIT void system_init(void);
+EXT_APP_SUPERCAP bool App_Supercap_Init(void);
 
-#endif /* SYSTEM_INIT_H */
+#endif /* APP_SUPERCAP_H */

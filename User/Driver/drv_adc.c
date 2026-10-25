@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       DRV_ANALOG
+*                                                       DRV_ADC
 *                            Driver module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : drv_analog.c
+* Filename      : drv_adc.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -16,10 +16,11 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#define DEF_DRV_ANALOG
-#include "drv_analog.h"
-#include "opamp.h"
+#define DEF_DRV_ADC
+#include "drv_adc.h"
 #include "adc.h"
+#include "app_rtt.h"
+#include "app_rtt.h"
 
 /*
 *************************************************************************************************************************
@@ -27,21 +28,19 @@
 *************************************************************************************************************************
 */
 
-#define OVERSAMPLING 1
 // #define OVERSAMPLING_RIGHT_SHIFT 0
-#if OVERSAMPLING
-#define OVERSAMPLING_RATIO 2
-#else
-#define OVERSAMPLING_RATIO 1
-#endif
+
+#define OVERSAMPLING_RATIO 0
+
 #if !OVERSAMPLING_RIGHT_SHIFT
+
 #define RIGHT_SHIFT 0
 #else
 #define RIGHT_SHIFT 1
 #endif
-#define ADC_REF_VOLTAGE      3.30f
-#define ADC_MAX_VALUE        ((4095 * OVERSAMPLING_RATIO) >> RIGHT_SHIFT)
-#define DIV_ADC_MAX_VALUE    1 / ADC_MAX_VALUE
+
+#define ADC_MAX_VALUE     ((4095 * OVERSAMPLING_RATIO) >> RIGHT_SHIFT)
+#define DIV_ADC_MAX_VALUE 1 / ADC_MAX_VALUE
 // #define ADC1_BUFFER_SIZE 2
 // #define ADC2_BUFFER_SIZE 3
 // uint16_t adc1_buffer[ADC1_BUFFER_SIZE];
@@ -72,10 +71,9 @@ typedef struct {
 *************************************************************************************************************************
 */
 
-uint32_t        adc_dual_buffer[ADC_DUAL_BUFFER_SIZE];
-adc_rx_callback user_adc_rx = NULL;
-uint16_t        vrefint_cal;
-LPF2_Filter_t   v_filter[6];
+uint32_t      adc_dual_buffer[ADC_DUAL_BUFFER_SIZE];
+uint16_t      vrefint_cal;
+LPF2_Filter_t v_filter[6];
 
 /*
 *************************************************************************************************************************
@@ -89,28 +87,24 @@ LPF2_Filter_t   v_filter[6];
 *************************************************************************************************************************
 */
 
-void     analog_init(void);
-void     user_adc_register_callback(adc_rx_callback callback);
+DRV_ADC_HANDLE_T drv_adc_hdl;
+//= {
+//    .callback      = NULL,
+//    .adc_value_raw = { 0 }
+//};
 
-analog_t user_analog_t = {
-    .init              = analog_init,
-    .register_callback = user_adc_register_callback,
-    .original_voltage  = {0},
-    //    .filtered_voltage = {0}
-};
-
-void analog_init(void)
+void Drv_ADC_Init(void)
 {
-    HAL_OPAMP_SelfCalibrate(&hopamp1);
-    HAL_OPAMP_SelfCalibrate(&hopamp4);
-    HAL_OPAMP_Start(&hopamp1);
-    HAL_OPAMP_Start(&hopamp4);
     HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
     HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+
+    /* Read factory VREFINT cal BEFORE starting DMA so the first ConvCplt is valid. */
+    vrefint_cal = *(__IO uint16_t *)(0x1FFF75AA);
+
     //    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buffer, ADC1_BUFFER_SIZE);
     //    HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buffer, ADC2_BUFFER_SIZE);
+    /* start RTT BEFORE ADC DMA so first ConvCplt cannot race init */
     HAL_ADCEx_MultiModeStart_DMA(&hadc1, adc_dual_buffer, ADC_DUAL_BUFFER_SIZE);
-    vrefint_cal = *(__IO uint16_t *)(0x1FFF75AA);
 }
 
 float LPF2_Apply(LPF2_Filter_t *f, float input)
@@ -144,13 +138,17 @@ float LPF2_Apply(LPF2_Filter_t *f, float input)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc->Instance == ADC1) {
-        user_analog_t.original_voltage[0] = 3.0f * vrefint_cal / ((float)(adc_dual_buffer[0] & 0xFFFF) / ((float)(OVERSAMPLING_RATIO >> RIGHT_SHIFT))) + VREF_OFFSET;
-        user_analog_t.original_voltage[1] = (float)(adc_dual_buffer[1] & 0xFFFF) * 3.30f * DIV_ADC_MAX_VALUE;
-        user_analog_t.original_voltage[2] = (float)(adc_dual_buffer[2] & 0xFFFF) * 3.30f * DIV_ADC_MAX_VALUE;
+        DRV_ADC_HANDLE_T *ptr = &drv_adc_hdl;
 
-        user_analog_t.original_voltage[3] = (float)(adc_dual_buffer[0] >> 16 & 0xFFFF) * 3.30f * DIV_ADC_MAX_VALUE;
-        user_analog_t.original_voltage[4] = (float)(adc_dual_buffer[1] >> 16 & 0xFFFF) * 3.30f * DIV_ADC_MAX_VALUE;
-        user_analog_t.original_voltage[5] = (float)(adc_dual_buffer[2] >> 16 & 0xFFFF) * 3.30f * DIV_ADC_MAX_VALUE;
+        ptr->adc_value_raw[0] = (adc_dual_buffer[0] & 0xFFFF) >> OVERSAMPLING_RATIO;
+        ptr->adc_value_raw[1] = (adc_dual_buffer[1] & 0xFFFF) >> OVERSAMPLING_RATIO;
+        ptr->adc_value_raw[2] = (adc_dual_buffer[2] & 0xFFFF) >> OVERSAMPLING_RATIO;
+        ptr->adc_value_raw[3] = (adc_dual_buffer[0] >> 16 & 0xFFFF) >> OVERSAMPLING_RATIO;
+        ptr->adc_value_raw[4] = (adc_dual_buffer[1] >> 16 & 0xFFFF) >> OVERSAMPLING_RATIO;
+        ptr->adc_value_raw[5] = (adc_dual_buffer[2] >> 16 & 0xFFFF) >> OVERSAMPLING_RATIO;
+
+        App_RTT_Write(0, &ptr->adc_value_raw[0]);
+        App_RTT_Write(1, &ptr->adc_value_raw[2]);
 
         //		 user_analog_t.filtered_voltage[5] = LPF2_Apply(&v_filter[3],user_analog_t.original_voltage[5]);
 
@@ -168,13 +166,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         //        user_analog_t.last_voltage[4] = user_analog_t.filtered_voltage[4];
         //        user_analog_t.last_voltage[5] = user_analog_t.filtered_voltage[5];
 
-        if (user_adc_rx != NULL) {
-            user_adc_rx();
+        if (ptr->callback != NULL) {
+            ptr->callback();
         }
     }
-}
-
-void user_adc_register_callback(adc_rx_callback callback)
-{
-    user_adc_rx = callback;
 }

@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       HAL_SUPERCAP
-*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : SuperCap.h
+*                                                     APP_TASK_SCHEDULER
+*                      Application layer module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : app_task_scheduler.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -12,68 +12,36 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*/
-
-#ifndef HAL_SUPERCAP_H
-#define HAL_SUPERCAP_H
-
-/*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
+#define DEF_APP_TASK_SCHEDULER
+#include "app_task_scheduler.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "cmsis_os.h"
+#include "queue.h"
+#include "message_buffer.h"
+#include "hal_usart.h"
 #include "config.h"
-#include "stdbool.h"
-
+#include "hal_fdcan.h"
+#include "app_supercap.h"
+#include "hal_bms_cmd.h"
+#include "drv_rgb.h"
+#include "stm32g4xx.h"
+#include "app_storage.h"
 /*
 *************************************************************************************************************************
-*                                                     EXTERN DEFINES
+*                                                    PRIVATE DEFINES
 *************************************************************************************************************************
 */
 
-#ifdef DEF_HAL_SUPERCAP
-#define EXT_HAL_SUPERCAP
-#else
-#define EXT_HAL_SUPERCAP extern
-#endif
-
 /*
 *************************************************************************************************************************
-*                                                     PUBLIC DEFINES
+*                                                     PRIVATE TYPES
 *************************************************************************************************************************
 */
-
-#define MAX_POWER          100.0f
-#define MAX_CHARGE_CURR    40.0f
-#define MAX_DISCHARGE_CURR -45.0f
-#if USE_BMS_CMD
-#define MAX_DISCHARGE_POWER -450.0f
-#endif
-#define MAX_CHARGE_POWER MAX_POWER - 5.0f
-
-/*
-*************************************************************************************************************************
-*                                                      PUBLIC TYPES
-*************************************************************************************************************************
-*/
-
-typedef struct
-{
-    volatile float inp_vol;
-    volatile float cap_vol;
-    volatile float inp_cur;
-    volatile float oup_cur;
-    volatile float cap_cur;
-} SuperCap_Ele_t;
-
-typedef struct
-{
-    SuperCap_Ele_t ele;
-    volatile float iref;
-    volatile u8    tick;
-    volatile u16   pwm_val;
-    volatile bool  OpenPwmFlag;
-} hal_supercap_handle_t;
 
 /*
 *************************************************************************************************************************
@@ -87,7 +55,14 @@ typedef struct
 *************************************************************************************************************************
 */
 
-EXT_HAL_SUPERCAP hal_supercap_handle_t supcap;
+#if USE_BMS_CMD
+extern hal_bms_handle_t bms_handle;
+#endif
+extern osThreadId_t          CAN_Send_TaskHandle;
+extern osThreadId_t          UartTaskHandle;
+extern MessageBufferHandle_t uartMessageBuffer;
+extern osMessageQueueId_t    FDCANQueueHandle;
+extern app_supercap_handle_t supcap;
 
 /*
 *************************************************************************************************************************
@@ -101,6 +76,77 @@ EXT_HAL_SUPERCAP hal_supercap_handle_t supcap;
 *************************************************************************************************************************
 */
 
-EXT_HAL_SUPERCAP bool hal_supercap_init(void);
+uint32_t storage_test;
 
-#endif /* HAL_SUPERCAP_H */
+void     StartCAN_Send_Task(void *argument)
+{
+    for (;;) {
+        hal_supercap_send_can_msg();
+        osDelay(1);
+    }
+}
+
+void StartUartTask(void *argument)
+{
+    hal_usart_init();
+    for (;;) {
+        uint8_t rx_data[128];
+        size_t  received_size = xMessageBufferReceive(uartMessageBuffer, rx_data, sizeof(rx_data), portMAX_DELAY);
+        hal_uart_data_process((char *)rx_data, received_size);
+    }
+}
+
+void StartUartTxTask(void *argument)
+{
+    for (;;) {
+        // hal_printf_data();
+        HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = App_Storage_GetHandle();
+
+        // storage_test++;
+        // ptr->para_updt_func(SP_CAP_CURR_ERR_OFFSET, &storage_test, sizeof(storage_test));
+        osDelay(100);
+    }
+}
+
+void StartRGBTask(void *argument)
+{
+    for (;;) {
+#if USE_BMS_CMD
+        switch (bms_handle.status) {
+            case BMS_UNINIT:
+                RGB_Set(ON, OFF, OFF);
+                break;
+            case BMS_POWER_METER:
+                RGB_Set(OFF, ON, OFF);
+                break;
+            case BMS_POWER_CONTROL:
+                RGB_Set(OFF, OFF, ON);
+                break;
+            default:
+                RGB_Set(OFF, OFF, OFF);
+                break;
+        }
+#else
+        if (supcap.OpenPwmFlag == false) {
+            RGB_Set(ON, OFF, OFF);
+        } else if (supcap.OpenPwmFlag == true && supcap.iref > 0.2) {
+            RGB_Set(OFF, ON, OFF);
+        } else if (supcap.OpenPwmFlag == true && supcap.iref <= -0.2) {
+            RGB_Set(OFF, OFF, ON);
+        }
+#endif
+        osDelay(100);
+    }
+}
+
+void configureTimerForRunTimeStats(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+unsigned long getRunTimeCounterValue(void)
+{
+    return DWT->CYCCNT;
+}

@@ -87,20 +87,20 @@ typedef enum {
 
 typedef struct
 {
-    u32 id_type;
-    u32 frame_type;
-    u32 id;
-    u32 length;
+    uint32_t id_type;
+    uint32_t frame_type;
+    uint32_t id;
+    uint32_t length;
 } drv_fdcan_rx_typedef_t;
 
 typedef struct
 {
-    drv_fdcan_filter_status_t (*add_id_to_filter)(u32 id_type, u32 filter_type, u32 id1, u32 id2, u32 fifos);
-    s32 (*start)(void);
-    s32 (*send)(u32 id, u32 id_type, u32 txframtype, u32 length, u8 *pdata);
+    drv_fdcan_filter_status_t (*add_id_to_filter)(uint32_t id_type, uint32_t filter_type, uint32_t id1, uint32_t id2, uint32_t fifos);
+    int32_t (*start)(void);
+    int32_t (*send)(uint32_t id, uint32_t id_type, uint32_t txframtype, uint32_t length, uint8_t *pdata);
     void (*rx_callback)(fdcan_rx_callback callback);
     volatile drv_fdcan_rx_typedef_t rx_typedef;
-    volatile u8                     rx_data[8];
+    volatile uint8_t                     rx_data[8];
 } drv_fdcan_t;
 
 /*

@@ -2,7 +2,7 @@
 *************************************************************************************************************************
 *                                                          PID
 *                    Generic PID controller module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : PID.c
+* Filename      : lib_pid.c
 * Version       : V1.01.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -16,8 +16,8 @@
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#define DEF_PID
-#include "PID.h"
+#define DEF_LIB_PID
+#include "lib_pid.h"
 
 /*
 *************************************************************************************************************************
@@ -84,7 +84,7 @@ static inline float LimitMaxMin(float value, float max, float min)
 *************************************************************************************************************************
 */
 
-bool PID_Handle_Init(Pid_t *pid, const float Kpid[7], const Pid_Mode Mode)
+bool Lib_Pid_Handle_Init(Lib_Pid_t *pid, const float Kpid[7], const Lib_Pid_Mode Mode)
 {
     if (pid == NULL || Kpid == NULL)
         return false;
@@ -108,7 +108,7 @@ bool PID_Handle_Init(Pid_t *pid, const float Kpid[7], const Pid_Mode Mode)
     return true;
 }
 
-float PID_Calculate(Pid_t *pid, const float real, const float exp)
+float Lib_Pid_Calculate(Lib_Pid_t *pid, const float real, const float exp)
 {
     if (pid == NULL)
         return 0.0f;
@@ -121,7 +121,7 @@ float PID_Calculate(Pid_t *pid, const float real, const float exp)
 
     pid->Err[0] = exp - real;
 
-    if (pid->Mode == Pos_Pid) {
+    if (pid->Mode == Lib_Pos_Pid) {
         pid->Pout = pid->Kp * pid->Err[0];
         pid->Iout += (pid->Ki * pid->Err[0]);
         pid->Dout = pid->Kd * (pid->Err[0] - pid->Err[1]);
@@ -131,7 +131,7 @@ float PID_Calculate(Pid_t *pid, const float real, const float exp)
         pid->Tout = pid->Pout + pid->Iout + pid->Dout;
 
         pid->Tout = LimitMaxMin(pid->Tout, pid->Max_Out, pid->Min_Out);
-    } else if (pid->Mode == Inc_Pid) {
+    } else if (pid->Mode == Lib_Inc_Pid) {
         pid->Pout = pid->Kp * (pid->Err[0] - pid->Err[1]);
         pid->Iout = pid->Ki * pid->Err[0];
 
@@ -146,7 +146,7 @@ float PID_Calculate(Pid_t *pid, const float real, const float exp)
     return pid->Tout;
 }
 
-bool PID_Refresh(Pid_t *pid)
+bool Lib_Pid_Refresh(Lib_Pid_t *pid)
 {
     if (pid == NULL)
         return false;

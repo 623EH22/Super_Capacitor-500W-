@@ -50,14 +50,14 @@
 *************************************************************************************************************************
 */
 
-typedef void (*uart_rx_callback)(u16 size);
+typedef void (*uart_rx_callback)(uint16_t size);
 
 typedef struct
 {
-    s32 (*init)(void);
-    s32 (*printf)(const char *format, ...);
-    s32 (*transmit)(u8 *pdata, u16 size);
-    u8 rx_buffer[RX_BUFFER_SIZE];  // 接收缓冲区
+    int32_t (*init)(void);
+    int32_t (*printf)(const char *format, ...);
+    int32_t (*transmit)(uint8_t *pdata, uint16_t size);
+    uint8_t rx_buffer[RX_BUFFER_SIZE];  // 接收缓冲区
     void (*rx_callback_register)(uart_rx_callback callback);
 } uart_t;
 

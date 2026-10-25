@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       HAL_SUPERCAP
-*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : SuperCap.c
+*                                                       APP_SUPERCAP
+*                             Application module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : app_supercap.c
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -12,15 +12,12 @@
 *************************************************************************************************************************
 *   Version   Date          Author        Description
 *   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
-*************************************************************************************************************************
-*                                                     INCLUDE FILES
-*************************************************************************************************************************
 */
-#define DEF_HAL_SUPERCAP
-#include "hal_supercap.h"
-#include "drv_analog.h"
+#define DEF_APP_SUPERCAP
+#include "app_supercap.h"
+#include "drv_adc.h"
 #include "drv_hrtim.h"
-#include "PID.h"
+#include "lib_pid.h"
 #include "hal_usart.h"
 #include "stm32g4xx.h"
 #include "hal_bms_cmd.h"
@@ -32,7 +29,6 @@
 *************************************************************************************************************************
 */
 
-#define MEASURE
 #define CHARGE_EFFICIENCY    0.90f
 #define DISCHARGE_EFFICIENCY 1.005f
 #define CUR_KP               350.0f
@@ -61,6 +57,7 @@
 #define OUT_CURR_OFFSET      1.65f
 #define INP_CURR_OFFSET      1.65f
 #define CAP_CURR_OFFSET      1.65f
+
 /*需要修改的参数*/
 #define CAP_VOLTAGE_ERR_COEFF  1.0028f
 #define INP_VOLTAGE_ERR_COEFF  0.9950f
@@ -94,17 +91,17 @@ hal_bms_handle_t bms_handle;
 *************************************************************************************************************************
 */
 
-extern analog_t    user_analog_t;
+// extern analog_t    user_analog_t;
 extern hrtim_t     user_hrtim;
 extern uart_data_t uart_data;
-Pid_t              cur_pid;
+Lib_Pid_t          cur_pid;
 volatile uint32_t  run_time_start;
 volatile uint32_t  run_time_end;
 volatile uint32_t  run_time_diff;
 volatile uint32_t  run_freq;
 volatile uint32_t  last_run_freq;
 volatile uint32_t  run_freq_diff;
-u16                shutdown = 0;
+uint16_t           shutdown = 0;
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS
@@ -117,34 +114,34 @@ u16                shutdown = 0;
 *************************************************************************************************************************
 */
 
-hal_supercap_handle_t supcap = { 0 };
-void                  hal_supercap_control(void);
-void                  hal_supercap_calc(void);
+void                  App_Supercap_Control(void);
 
-bool                  hal_supercap_init(void)
+app_supercap_handle_t supcap;
+
+bool                  App_Supercap_Init(void)
 {
-    float cur_kpid[7] = { CUR_KP, CUR_KI, CUR_KD, MAX_DUTY, -MAX_DUTY, MAX_DUTY, MIN_DUTY };
-    if (!PID_Handle_Init(&cur_pid, cur_kpid, Inc_Pid))
+    DRV_ADC_HANDLE_T *drv_ptr     = &drv_adc_hdl;
+    float             cur_kpid[7] = { CUR_KP, CUR_KI, CUR_KD, MAX_DUTY, -MAX_DUTY, MAX_DUTY, MIN_DUTY };
+    if (!Lib_Pid_Handle_Init(&cur_pid, cur_kpid, Lib_Inc_Pid))
         return false;
+
+    drv_ptr->callback = App_Supercap_Control;
 #if USE_BMS_CMD
     hal_bms_cmd_init(&bms_handle);
 #endif
     supcap.iref        = 0.0f;
     supcap.tick        = VOL_RING_REPEAT;
     supcap.pwm_val     = 0;
-
     supcap.OpenPwmFlag = false;
-    user_analog_t.init();
-    user_analog_t.register_callback(hal_supercap_control);
     user_hrtim.init();
-#ifdef MEASURE
+#ifdef Debug
     user_hrtim.start();
 #endif
 
     return true;
 }
 
-bool hal_supercap_refresh(void)
+bool App_Supercap_Refresh(void)
 {
     user_hrtim.stop();
 
@@ -157,45 +154,23 @@ bool hal_supercap_refresh(void)
     supcap.tick        = VOL_RING_REPEAT;
     supcap.pwm_val     = 0;
 
-    if (!PID_Refresh(&cur_pid))
+    if (!Lib_Pid_Refresh(&cur_pid))
         return false;
     return true;
 }
 
-void hal_supercap_control(void)
-{
-    //    run_time_start = DWT->CYCCNT;
-    //    run_freq = DWT->CYCCNT;
-    //    run_freq_diff = run_freq - last_run_freq;
-    //    last_run_freq = run_freq;
-
-    supcap.ele.cap_vol = (user_analog_t.original_voltage[1] - CAP_VOLTAGE_OFFSET) * CAP_VOLTAGE_FACTOR * CAP_VOLTAGE_ERR_COEFF + CAP_VOLTAGE_ERR_OFFSET;
-    supcap.ele.inp_vol = (user_analog_t.original_voltage[2] - INP_VOLTAGE_OFFSET) * INP_VOLTAGE_FACTOR * INP_VOLTAGE_ERR_COEFF + INP_VOLTAGE_ERR_OFFSET;
-    supcap.ele.oup_cur = -((user_analog_t.original_voltage[3] - OUT_CURR_OFFSET) * OUT_CURR_FACTOR * OUT_CURR_ERR_COEFF + OUT_CURR_ERR_OFFSET);
-    supcap.ele.inp_cur = (user_analog_t.original_voltage[4] - INP_CURR_OFFSET) * INP_CURR_FACTOR * INP_CURR_ERR_COEFF + INP_CURR_ERR_OFFSET;
-    supcap.ele.cap_cur = (user_analog_t.original_voltage[5] - CAP_CURR_OFFSET) * CAP_CURR_FACTOR * CAP_CURR_ERR_COEFF + CAP_CURR_ERR_OFFSET;
-#ifdef MEASURE
-    user_hrtim.set_compare(uart_data.uint16_data);  // 设置一个固定的占空比
-#else
-    hal_supercap_calc();
-#endif
-
-    //	run_time_end = DWT->CYCCNT;
-    //	run_time_diff = run_time_end - run_time_start;
-}
-
-void hal_supercap_calc(void)
+void App_Supercap_Calc(void)
 {
     float        max_cap_cur     = 0.0f;
     static float available_power = 0.0f;
 #if USE_BMS_CMD
     if ((bms_handle.status != BMS_POWER_CONTROL && supcap.OpenPwmFlag == true) || bms_handle.control_sign == false) {
-        hal_supercap_refresh();
+        App_Supercap_Refresh();
         return;
     }
     available_power = bms_handle.Available_Power;
 #else
-    static u8 pwr_ring = POWER_RING_REPEAT;
+    static uint8_t pwr_ring = POWER_RING_REPEAT;
     if (pwr_ring == POWER_RING_REPEAT) {
         pwr_ring        = 0;
         available_power = MAX_POWER - (supcap.ele.inp_vol * supcap.ele.oup_cur);
@@ -223,7 +198,7 @@ void hal_supercap_calc(void)
         }
     }
     supcap.tick++;
-    supcap.pwm_val = (u16)PID_Calculate(&cur_pid, supcap.ele.cap_cur, supcap.iref);
+    supcap.pwm_val = (uint16_t)Lib_Pid_Calculate(&cur_pid, supcap.ele.cap_cur, supcap.iref);
     user_hrtim.set_compare(supcap.pwm_val);
 
     if (supcap.pwm_val > ((supcap.ele.cap_vol - 0.3f) * MAX_COMPARE / supcap.ele.inp_vol) && supcap.OpenPwmFlag == false) {
@@ -239,6 +214,30 @@ void hal_supercap_calc(void)
 
     if ((supcap.ele.inp_vol > MAX_INPUT_VOLTAGE || supcap.ele.inp_vol < MIN_INPUT_VOLTAGE) || shutdown >= 5000) {
         shutdown = 0;
-        hal_supercap_refresh();
+        App_Supercap_Refresh();
     }
+}
+
+void App_Supercap_Control(void)
+{
+    //    run_time_start = DWT->CYCCNT;
+    //    run_freq = DWT->CYCCNT;
+    //    run_freq_diff = run_freq - last_run_freq;
+    //    last_run_freq = run_freq;
+
+    Hal_Ele_Value_Update(&supcap.ele);
+    //    supcap.ele.cap_vol = (user_analog_t.original_voltage[1] - CAP_VOLTAGE_OFFSET) * CAP_VOLTAGE_FACTOR * CAP_VOLTAGE_ERR_COEFF + CAP_VOLTAGE_ERR_OFFSET;
+    //    supcap.ele.inp_vol = (user_analog_t.original_voltage[2] - INP_VOLTAGE_OFFSET) * INP_VOLTAGE_FACTOR * INP_VOLTAGE_ERR_COEFF + INP_VOLTAGE_ERR_OFFSET;
+    //    supcap.ele.oup_cur = -((user_analog_t.original_voltage[3] - OUT_CURR_OFFSET) * OUT_CURR_FACTOR * OUT_CURR_ERR_COEFF + OUT_CURR_ERR_OFFSET);
+    //    supcap.ele.inp_cur = (user_analog_t.original_voltage[4] - INP_CURR_OFFSET) * INP_CURR_FACTOR * INP_CURR_ERR_COEFF + INP_CURR_ERR_OFFSET;
+    //    supcap.ele.cap_cur = (user_analog_t.original_voltage[5] - CAP_CURR_OFFSET) * CAP_CURR_FACTOR * CAP_CURR_ERR_COEFF + CAP_CURR_ERR_OFFSET;
+
+#ifdef Debug
+    user_hrtim.set_compare(uart_data.uint16_data);  // 设置一个固定的占空比
+#else
+    App_Supercap_Calc();
+#endif
+
+    //	run_time_end = DWT->CYCCNT;
+    //	run_time_diff = run_time_end - run_time_start;
 }

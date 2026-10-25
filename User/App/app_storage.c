@@ -17,7 +17,7 @@
 */
 #define DEF_APP_STORAGE
 #include "app_storage.h"
-#include "task_scheduler.h"
+#include "app_task_scheduler.h"
 /*
 *************************************************************************************************************************
 *                                                    PRIVATE DEFINES
@@ -49,7 +49,7 @@
 */
 void App_Storage_Register(void)
 {
-    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
+    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = Hal_Storage_GetFuncHandle();
 
     ptr->register_func(SP_CAP_CURR_ERR_OFFSET, &storage_test, sizeof(storage_test));
 }
@@ -60,13 +60,12 @@ void App_Storage_Register(void)
 */
 HAL_STORAGE_FUNC_INFO_HANDLE_T *App_Storage_GetHandle(void)
 {
-    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
-    return ptr;
+    return Hal_Storage_GetFuncHandle();
 }
 
 void App_Storage_Init(void)
 {
-    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = &hal_storage_func_info;
+    HAL_STORAGE_FUNC_INFO_HANDLE_T *ptr = Hal_Storage_GetFuncHandle();
     App_Storage_Register();
     ptr->init_func();
 }

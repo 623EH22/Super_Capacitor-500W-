@@ -25,8 +25,8 @@
 #include "string.h"
 #include "stdbool.h"
 #include "stdlib.h"
-#include "drv_analog.h"
-#include "hal_supercap.h"
+#include "drv_adc.h"
+#include "app_supercap.h"
 
 /*
 *************************************************************************************************************************
@@ -53,10 +53,10 @@
 */
 
 extern uart_t                user_uart_t;
-extern hal_supercap_handle_t     supcap;
+extern app_supercap_handle_t     supcap;
 extern MessageBufferHandle_t uartMessageBuffer;
 char                         global_stats_buffer[1024];
-extern u16                   shutdown;
+extern uint16_t                   shutdown;
 extern float                 available_power;
 
 /*
@@ -71,19 +71,19 @@ extern float                 available_power;
 *************************************************************************************************************************
 */
 
-void        hal_uart_rx_callback_func(u16 size);
+void        hal_uart_rx_callback_func(uint16_t size);
 
 uart_data_t uart_data = {0};
 
 /*初始化串口*/
-s32 hal_usart_init(void)
+int32_t hal_usart_init(void)
 {
     user_uart_t.rx_callback_register(hal_uart_rx_callback_func);  // 注册回调函数
     return user_uart_t.init();
 }
 
 /*中断回调*/
-void hal_uart_rx_callback_func(u16 size)
+void hal_uart_rx_callback_func(uint16_t size)
 {
     BaseType_t pxHighterPriorityTaskWoken = pdFALSE;
     xMessageBufferSendFromISR(uartMessageBuffer, user_uart_t.rx_buffer, size, &pxHighterPriorityTaskWoken);
@@ -91,7 +91,7 @@ void hal_uart_rx_callback_func(u16 size)
 }
 
 /*数据处理*/
-void hal_uart_data_process(char *pdata, u16 size)
+void hal_uart_data_process(char *pdata, uint16_t size)
 {
     char ch         = pdata[size - 1];  // 获取最后一个字节
     pdata[size - 1] = '\0';             // 将'\r'替换为字符串结束符
@@ -118,10 +118,10 @@ void hal_uart_data_process(char *pdata, u16 size)
         } else if (strcmp(pdata, "stop") == 0) {
             uart_data.print_ready = false;  // 清除打印准备就绪标志
         } else {
-            u32 temp = (u32)atoi((char *)pdata);  // 将字符串转换为无符号整数
+            uint32_t temp = (uint32_t)atoi((char *)pdata);  // 将字符串转换为无符号整数
             if (temp <= 65535) {
                 // 处理有效的无符号整数数据
-                uart_data.uint16_data = (u16)temp;                                     // 存储转换后的无符号整数
+                uart_data.uint16_data = (uint16_t)temp;                                     // 存储转换后的无符号整数
                 user_uart_t.printf("Received uint16: %u\r\n", uart_data.uint16_data);  // 打印接收到的无符号整数
             } else {
                 // 处理非法输入

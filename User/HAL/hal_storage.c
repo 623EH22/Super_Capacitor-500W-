@@ -463,48 +463,41 @@ void Hal_Storage_Init(void)
     uint32_t                   page;
     STORAGE_PAGE_STATUS_E      status;
 
-    status = Hal_Storage_FindActivePage(&page);
-
-    switch (status) {
-        case STORAGE_PAGE_FIRST: {
-            Hal_Storage_PageInit(0, 1);
-
-            ptr->page    = 0;
-            ptr->current = STORAGE_PAGE_ADDR(ptr->page) + sizeof(STORAGE_PAGE_HEADER_T);
-            break;
+    if (ptr->item_count != 0U) {
+        status = Hal_Storage_FindActivePage(&page);
+        switch (status) {
+            case STORAGE_PAGE_FIRST: {
+                Hal_Storage_PageInit(0, 1);
+                ptr->page    = 0;
+                ptr->current = STORAGE_PAGE_ADDR(ptr->page) + sizeof(STORAGE_PAGE_HEADER_T);
+                break;
+            }
+            case STORAGE_PAGE_ACTIVE:
+                ptr->page    = page;
+                ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
+                Hal_Storage_DataRecoverFromFlash(ptr);
+                break;
+            case STORAGE_PAGE_FULL:
+                ptr->page    = page;
+                ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
+                Hal_Storage_DataRecoverFromFlash(ptr);
+                Hal_Storage_PageTransfer(ptr);
+                break;
+            case STORAGE_PAGE_RECEIVE:
+                ptr->page    = (uint8_t)((page - 1U) & (STORAGE_USE_PAGE_NUM - 1U));
+                ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
+                Hal_Storage_DataRecoverFromFlash(ptr);
+                Hal_Storage_PageTransfer(ptr);
+                break;
+            case STORAGE_PAGE_INVALID:
+                /* Handle invalid to check and clear a fault*/
+                Hal_Storage_ErrorHandler(ptr);
+                break;
+            default:
+                break;
         }
-
-        case STORAGE_PAGE_ACTIVE:
-
-            ptr->page    = page;
-            ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
-            Hal_Storage_DataRecoverFromFlash(ptr);
-            break;
-
-        case STORAGE_PAGE_FULL:
-
-            ptr->page    = page;
-            ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
-            Hal_Storage_DataRecoverFromFlash(ptr);
-            Hal_Storage_PageTransfer(ptr);
-            break;
-
-        case STORAGE_PAGE_RECEIVE:
-
-            ptr->page    = (uint8_t)((page - 1U) & (STORAGE_USE_PAGE_NUM - 1U));
-            ptr->current = Hal_Storage_GetCurrentAddr(ptr->page);
-            Hal_Storage_DataRecoverFromFlash(ptr);
-            Hal_Storage_PageTransfer(ptr);
-
-            break;
-
-        case STORAGE_PAGE_INVALID:
-
-            /* Handle invalid to check and clear a fault*/
-            Hal_Storage_ErrorHandler(ptr);
-            break;
-        default:
-            break;
+    } else {
+        return;
     }
 }
 
@@ -539,4 +532,9 @@ void Hal_Storage_ParaUpdt(uint16_t id, void *data, uint8_t length)
         Hal_Storage_PageTransfer(ptr);
         Hal_Storage_DataWrite(id, data, length);
     }
+}
+
+HAL_STORAGE_FUNC_INFO_HANDLE_T *Hal_Storage_GetFuncHandle(void)
+{
+    return &hal_storage_func_info;
 }

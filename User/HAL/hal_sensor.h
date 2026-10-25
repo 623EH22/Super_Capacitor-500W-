@@ -1,8 +1,8 @@
 /*
 *************************************************************************************************************************
-*                                                       DRV_ANALOG
-*                            Driver module for the 500W Super-Capacitor Digital Power Supply.
-* Filename      : drv_analog.h
+*                                                         HAL_SENSOR
+*                             HAL module for the 500W Super-Capacitor Digital Power Supply.
+* Filename      : hal_sensor.h
 * Version       : V1.00.00
 * Programmer(s) : RuiYuan Lin
 *************************************************************************************************************************
@@ -11,29 +11,28 @@
 *                                                  MODIFICATION HISTORY
 *************************************************************************************************************************
 *   Version   Date          Author        Description
-*   V1.00.00  2026-09-01    RuiYuan Lin   Initial release
+*   V1.00.00  2026-10-03    RuiYuan Lin   Initial release
 */
-
-#ifndef DRV_ANALOG_H
-#define DRV_ANALOG_H
+#ifndef HAL_SENSOR_H
+#define HAL_SENSOR_H
 
 /*
 *************************************************************************************************************************
 *                                                     INCLUDE FILES
 *************************************************************************************************************************
 */
-#include "config.h"
-
+#include <stdint.h>
+#include "drv_adc.h"
 /*
 *************************************************************************************************************************
 *                                                     EXTERN DEFINES
 *************************************************************************************************************************
 */
 
-#ifdef DEF_DRV_ANALOG
-#define EXT_DRV_ANALOG
+#ifdef DEF_HAL_SENSOR
+#define EXT_HAL_SENSOR
 #else
-#define EXT_DRV_ANALOG extern
+#define EXT_HAL_SENSOR extern
 #endif
 
 /*
@@ -41,23 +40,19 @@
 *                                                     PUBLIC DEFINES
 *************************************************************************************************************************
 */
-
+#define SENSOR_ADC_CHANNEL_COUNT 6U /* must match analog_t.adc_value_raw[6] in drv_adc.h */
 /*
 *************************************************************************************************************************
 *                                                      PUBLIC TYPES
 *************************************************************************************************************************
 */
-
-typedef void (*adc_rx_callback)(void);
-
-typedef struct
-{
-    void (*init)(void);
-    void (*register_callback)(adc_rx_callback callback);
-    float original_voltage[6];  // 存储原始电压值
-    //    float filtered_voltage[6]; // 存储滤波后的电压值
-} analog_t;
-
+typedef struct {
+    float cap_vol; /* super-capacitor voltage [V] */
+    float inp_vol; /* input voltage          [V] */
+    float oup_cur; /* output current         [A] */
+    float inp_cur; /* input current          [A] */
+    float cap_cur; /* super-capacitor current [A] */
+} HAL_SENSOR_ELE_HANDLE_T;
 /*
 *************************************************************************************************************************
 *                                                   PRIVATE VARIABLES
@@ -69,9 +64,6 @@ typedef struct
 *                                                    PUBLIC VARIABLES
 *************************************************************************************************************************
 */
-
-EXT_DRV_ANALOG analog_t user_analog_t;
-
 /*
 *************************************************************************************************************************
 *                                               PRIVATE (HELPER) FUNCTIONS
@@ -84,4 +76,7 @@ EXT_DRV_ANALOG analog_t user_analog_t;
 *************************************************************************************************************************
 */
 
-#endif /* DRV_ANALOG_H */
+EXT_HAL_SENSOR void Hal_Sensor_Init(void);
+EXT_HAL_SENSOR void Hal_Ele_Value_Update(HAL_SENSOR_ELE_HANDLE_T *ele_ptr);
+
+#endif /* HAL_SENSOR_H */

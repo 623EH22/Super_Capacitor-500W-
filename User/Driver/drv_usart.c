@@ -58,38 +58,38 @@ volatile char printf_buf[PRINTF_BUF_SIZE];      // printf使用的缓冲区
 *************************************************************************************************************************
 */
 
-static s32 Uart_Init(void);
-static s32 user_printf(const char *format, ...);
-static s32 user_transmit(u8 *pdata, u16 size);
+static int32_t Uart_Init(void);
+static int32_t user_printf(const char *format, ...);
+static int32_t user_transmit(uint8_t *pdata, uint16_t size);
 static void user_uart_register_callback(uart_rx_callback callback);
 
-static s32 Uart_Init(void)
+static int32_t Uart_Init(void)
 {
-	s32 status = 0;
+	int32_t status = 0;
 	status = HAL_UARTEx_ReceiveToIdle_DMA(&DEBUG_SERIAL,(uint8_t *)user_uart_t.rx_buffer,RX_BUFFER_SIZE);
 	__HAL_DMA_DISABLE_IT(DEBUG_SERIAL.hdmarx,DMA_IT_HT);
 	return status;
 }
 
-static s32 user_printf(const char *format, ...)
+static int32_t user_printf(const char *format, ...)
 {
     va_list args;
-    u32 len;
+    uint32_t len;
 
     va_start(args, format);
     len = vsnprintf((char*)printf_buf, PRINTF_BUF_SIZE, format, args);
     va_end(args);
 
     #if USE_TX_DMA
-    	HAL_UART_Transmit_DMA(&DEBUG_SERIAL,(u8 *)printf_buf, len);
+    	HAL_UART_Transmit_DMA(&DEBUG_SERIAL,(uint8_t *)printf_buf, len);
     #else
-    	HAL_UART_Transmit(&DEBUG_SERIAL, (u8 *)printf_buf, len, HAL_MAX_DELAY);
+    	HAL_UART_Transmit(&DEBUG_SERIAL, (uint8_t *)printf_buf, len, HAL_MAX_DELAY);
     #endif
     
     return len;
 }
 
-static s32 user_transmit(u8 *pdata, u16 size)
+static int32_t user_transmit(uint8_t *pdata, uint16_t size)
 {
     #if USE_TX_DMA
         return HAL_UART_Transmit_DMA(&DEBUG_SERIAL, pdata, size);

@@ -63,7 +63,7 @@ void    HRTIM_Init(void);
 void    HRTIM_DeInit(void);
 void    HRTIM_Start(void);
 void    HRTIM_Stop(void);
-void    HRTIM_SetCompare(u16 compare);
+void    HRTIM_SetCompare(uint16_t compare);
 
 hrtim_t user_hrtim =
     {
@@ -97,7 +97,7 @@ void HRTIM_Stop(void)
     HAL_HRTIM_WaveformOutputStop(&hhrtim1, HRTIM_OUTPUT_TA2);
 }
 
-void HRTIM_SetCompare(u16 compare)
+void HRTIM_SetCompare(uint16_t compare)
 {
     if (compare > HRTIMA_PERIOD)
         compare = HRTIMA_PERIOD - MIN_COMPARE;
